@@ -180,7 +180,7 @@ const StaffDashboardPage = () => {
                     </button>
                     <button
                       className="btn btn-secondary"
-                      onClick={() => navigate(`/staff/queue/${queue.id}`)}
+                      onClick={() => navigate(`/staff/users`)}
                     >
                       Manage
                     </button>

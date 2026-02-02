@@ -16,6 +16,7 @@ import StaffDashboardPage from './pages/StaffDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import SuperAdminManageAdminsPage from './pages/SuperAdminManageAdminsPage';
 import AdminUserManagementPage from './pages/AdminUserManagementPage';
+import AdminCustomerManagementPage from './pages/AdminCustomerManagementPage';
 import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
 import AdminQueueManagementPage from './pages/AdminQueueManagementPage';
 import AdminSettingsPage from './pages/AdminSettingsPage';
@@ -106,6 +107,22 @@ function App() {
               element={
                 <PrivateRoute roles={['ORGANISATION_ADMIN', 'SUPER_ADMIN']}>
                   <AdminUserManagementPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin/customers"
+              element={
+                <PrivateRoute roles={['ORGANISATION_ADMIN', 'SUPER_ADMIN']}>
+                  <AdminCustomerManagementPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/staff/users"
+              element={
+                <PrivateRoute roles={['STAFF', 'ORGANISATION_ADMIN', 'SUPER_ADMIN']}>
+                  <AdminCustomerManagementPage />
                 </PrivateRoute>
               }
             />

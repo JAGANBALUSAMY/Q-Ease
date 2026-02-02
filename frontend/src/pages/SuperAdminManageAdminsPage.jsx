@@ -190,11 +190,30 @@ const SuperAdminManageAdminsPage = () => {
 
                             <div className="form-group">
                                 <label>Phone Number</label>
-                                <input
-                                    type="tel"
-                                    value={newAdmin.phoneNumber}
-                                    onChange={(e) => setNewAdmin({ ...newAdmin, phoneNumber: e.target.value })}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{
+                                        position: 'absolute',
+                                        left: '0.75rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#6b7280',
+                                        fontSize: '0.95rem',
+                                        fontWeight: '500',
+                                        pointerEvents: 'none',
+                                        zIndex: 1
+                                    }}>+91</span>
+                                    <input
+                                        type="tel"
+                                        value={newAdmin.phoneNumber}
+                                        onChange={(e) => {
+                                            const numericValue = e.target.value.replace(/\D/g, '');
+                                            const limitedValue = numericValue.slice(0, 10);
+                                            setNewAdmin({ ...newAdmin, phoneNumber: limitedValue });
+                                        }}
+                                        style={{ paddingLeft: '3.5rem' }}
+                                        placeholder="9876543210"
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-actions">

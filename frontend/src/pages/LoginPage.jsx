@@ -6,13 +6,16 @@ import './LoginPage.css';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [error, setError] = useState('');
+
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState('customer');
+  const [submitted, setSubmitted] = useState(false);
 
   const ROLES = [
     { id: 'customer', label: 'Customer' },
@@ -21,40 +24,78 @@ const LoginPage = () => {
     { id: 'super_admin', label: 'Super Admin' }
   ];
 
+  /* ---------- Validation ---------- */
+  const validateForm = () => {
+    const newErrors = {};
+    const email = formData.email.trim();
+    const password = formData.password.trim();
+
+    // Email / Employee ID
+    if (!email) {
+      newErrors.email =
+        role === 'staff' ? 'Employee ID is required' : 'Email is required';
+    } else if (role !== 'staff' && !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Enter a valid email address';
+    }
+
+    // Password
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    return newErrors;
+  };
+
+  /* ---------- Handlers ---------- */
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-    setError('');
+
+    // clear field-specific error while typing
+    setErrors({
+      ...errors,
+      [e.target.name]: ''
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setSubmitted(true);
 
-    const result = await login(formData.email, formData.password, role);
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    const result = await login(
+      formData.email.trim(),
+      formData.password.trim(),
+      role
+    );
 
     if (result.success) {
-      // Role based redirect
-      if (role === 'staff') {
-        navigate('/staff');
-      } else if (role === 'admin' || role === 'super_admin') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      if (role === 'staff') navigate('/staff');
+      else if (role === 'admin' || role === 'super_admin') navigate('/admin');
+      else navigate('/');
     } else {
-      setError(result.error);
+      setErrors({ general: result.error || 'Login failed' });
     }
+
     setLoading(false);
   };
 
   return (
     <div className="auth-page">
       <div className="auth-container">
-        {/* Left Side - Branding */}
+
         <div className="auth-branding">
           <div className="branding-content">
             <div className="brand-logo">
@@ -95,20 +136,18 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
+        {/* RIGHT SIDE – LOGIN FORM */}
         <div className="auth-form-container">
           <div className="auth-form-wrapper">
+
             <div className="form-header">
               <h2>Sign In</h2>
               <p>Enter your credentials to access your account</p>
             </div>
 
-            {error && (
+            {errors.general && (
               <div className="error-alert">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {error}
+                {errors.general}
               </div>
             )}
 
@@ -118,7 +157,11 @@ const LoginPage = () => {
                   key={r.id}
                   type="button"
                   className={`role-btn ${role === r.id ? 'active' : ''}`}
-                  onClick={() => setRole(r.id)}
+                  onClick={() => {
+                    setRole(r.id);
+                    setErrors({});
+                    setSubmitted(false);
+                  }}
                 >
                   {r.label}
                 </button>
@@ -126,51 +169,62 @@ const LoginPage = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="auth-form">
+
+              {/* EMAIL */}
               <div className="form-group">
-                <label htmlFor="email" className="form-label">
+                <label className="form-label">
                   {role === 'staff' ? 'Employee ID' : 'Email Address'}
                 </label>
+
                 <div className="input-with-icon">
                   <svg className="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                   </svg>
                   <input
                     type={role === 'staff' ? 'text' : 'email'}
-                    id="email"
                     name="email"
                     className="form-input"
-                    placeholder={role === 'staff' ? 'Enter Employee ID' : 'you@example.com'}
+                    placeholder={
+                      role === 'staff'
+                        ? 'Enter Employee ID'
+                        : 'you@example.com'
+                    }
                     value={formData.email}
                     onChange={handleChange}
-                    required
                   />
                 </div>
+
+                {submitted && errors.email && (
+                  <p className="error-text">{errors.email}</p>
+                )}
               </div>
 
+              {/* PASSWORD */}
               <div className="form-group">
                 <div className="label-with-link">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
+                  <label className="form-label">Password</label>
                   <Link to="/forgot-password" className="forgot-link">
                     Forgot?
                   </Link>
                 </div>
+
                 <div className="input-with-icon">
                   <svg className="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   <input
                     type="password"
-                    id="password"
                     name="password"
                     className="form-input"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
-                    required
                   />
                 </div>
+
+                {submitted && errors.password && (
+                  <p className="error-text">{errors.password}</p>
+                )}
               </div>
 
               <button
@@ -178,19 +232,7 @@ const LoginPage = () => {
                 className="btn btn-primary btn-lg btn-block"
                 disabled={loading}
               >
-                {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign In
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </>
-                )}
+                {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
@@ -198,12 +240,11 @@ const LoginPage = () => {
               <p>
                 Don't have an account?{' '}
                 <Link to="/register" className="auth-link">
-                  Sign up for free
+                  Sign up
                 </Link>
               </p>
             </div>
-
-            <div className="divider">
+                <div className="divider">
               <span>or continue with</span>
             </div>
 

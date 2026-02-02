@@ -24,15 +24,44 @@ const AdminDashboardPage = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, activityRes, queuesRes] = await Promise.all([
-        api.get('/analytics/admin-stats'),
-        api.get('/analytics/recent-activity'),
-        api.get('/queues') // Super Admin gets all, Org Admin gets theirs
+
+      // Fetch queues and users data
+      const [queuesRes, usersRes] = await Promise.all([
+        api.get('/queues').catch(err => ({ data: { data: { queues: [] } } })),
+        api.get('/users').catch(err => ({ data: { data: { users: [] } } }))
       ]);
 
-      setStats(statsRes.data.stats || stats);
-      setRecentActivity(activityRes.data.activity || []);
-      setQueues(queuesRes.data.data.queues || []);
+      const queuesData = queuesRes.data.data?.queues || [];
+      const usersData = usersRes.data.data?.users || [];
+
+      // Calculate stats from actual data
+      const totalQueues = queuesData.length;
+      const totalTokens = queuesData.reduce((sum, queue) => sum + (queue._count?.tokens || 0), 0);
+      const activeUsers = usersData.filter(u => u.isActive).length;
+
+      // Calculate average wait time from queues
+      const queuesWithTime = queuesData.filter(q => q.averageTime);
+      const avgWaitTime = queuesWithTime.length > 0
+        ? Math.round(queuesWithTime.reduce((sum, q) => sum + q.averageTime, 0) / queuesWithTime.length)
+        : 0;
+
+      setStats({
+        totalQueues,
+        totalTokens,
+        activeUsers,
+        avgWaitTime
+      });
+
+      setQueues(queuesData);
+
+      // Try to fetch recent activity, but don't fail if it doesn't exist
+      try {
+        const activityRes = await api.get('/analytics/recent-activity');
+        setRecentActivity(activityRes.data.activity || []);
+      } catch (err) {
+        console.log('Recent activity not available');
+        setRecentActivity([]);
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -82,6 +111,16 @@ const AdminDashboardPage = () => {
       ),
       color: 'success',
       onClick: () => navigate('/admin/users')
+    },
+    {
+      title: 'Manage Customers',
+      icon: (
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      color: 'info',
+      onClick: () => navigate('/admin/customers')
     },
     {
       title: 'View Analytics',

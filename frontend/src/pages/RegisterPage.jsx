@@ -18,10 +18,22 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+
+        // If it's the phone field, only allow numbers and limit to 10 digits
+        if (name === 'phone') {
+            const numericValue = value.replace(/\D/g, ''); // Remove all non-digits
+            const limitedValue = numericValue.slice(0, 10); // Limit to 10 digits
+            setFormData({
+                ...formData,
+                [name]: limitedValue
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        }
         setError('');
     };
 
@@ -180,16 +192,28 @@ const RegisterPage = () => {
 
                             <div className="form-group">
                                 <label htmlFor="phone" className="form-label">Phone Number (Optional)</label>
-                                <div className="input-with-icon">
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
                                     <svg className="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                     </svg>
+                                    <span style={{
+                                        position: 'absolute',
+                                        left: '3rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#6b7280',
+                                        fontSize: '0.95rem',
+                                        fontWeight: '500',
+                                        pointerEvents: 'none',
+                                        zIndex: 1
+                                    }}>+91</span>
                                     <input
                                         type="tel"
                                         id="phone"
                                         name="phone"
                                         className="form-input"
-                                        placeholder="+1 (555) 000-0000"
+                                        style={{ paddingLeft: '5rem' }}
+                                        placeholder="9876543210"
                                         value={formData.phone}
                                         onChange={handleChange}
                                     />
