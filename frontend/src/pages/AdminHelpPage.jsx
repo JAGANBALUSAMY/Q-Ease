@@ -1,7 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import './AdminHelpPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  ArrowLeft, 
+  Search,
+  BookOpen,
+  Rocket,
+  Users,
+  BarChart3,
+  Settings,
+  Wrench,
+  Mail,
+  MessageCircle,
+  Phone,
+  ChevronRight,
+  HelpCircle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const AdminHelpPage = () => {
   const navigate = useNavigate();
@@ -10,12 +37,12 @@ const AdminHelpPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   const helpCategories = [
-    { id: 'getting-started', name: 'Getting Started', icon: '🚀' },
-    { id: 'queue-management', name: 'Queue Management', icon: '📋' },
-    { id: 'user-management', name: 'User Management', icon: '👥' },
-    { id: 'analytics', name: 'Analytics & Reports', icon: '📊' },
-    { id: 'settings', name: 'Settings', icon: '⚙️' },
-    { id: 'troubleshooting', name: 'Troubleshooting', icon: '🔧' }
+    { id: 'getting-started', name: 'Getting Started', icon: Rocket, color: 'blue' },
+    { id: 'queue-management', name: 'Queue Management', icon: BookOpen, color: 'green' },
+    { id: 'user-management', name: 'User Management', icon: Users, color: 'purple' },
+    { id: 'analytics', name: 'Analytics & Reports', icon: BarChart3, color: 'amber' },
+    { id: 'settings', name: 'Settings', icon: Settings, color: 'slate' },
+    { id: 'troubleshooting', name: 'Troubleshooting', icon: Wrench, color: 'red' }
   ];
 
   const helpArticles = [
@@ -70,149 +97,248 @@ const AdminHelpPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const getDifficultyColor = (difficulty) => {
+  const getDifficultyConfig = (difficulty) => {
     switch(difficulty) {
-      case 'beginner': return '#27ae60';
-      case 'intermediate': return '#f39c12';
-      case 'advanced': return '#e74c3c';
-      default: return '#95a5a6';
+      case 'beginner': 
+        return { label: 'Beginner', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' };
+      case 'intermediate': 
+        return { label: 'Intermediate', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
+      case 'advanced': 
+        return { label: 'Advanced', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' };
+      default: 
+        return { label: 'General', color: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400' };
     }
   };
 
-  return (
-    <div className="admin-help-page">
-      <div className="page-header">
-        <button onClick={() => navigate(-1)} className="back-button">
-          ← Back to Dashboard
-        </button>
-        <h1>Help & Support</h1>
-        <p>Find answers to your questions and learn how to use Q-Ease effectively</p>
-      </div>
+  const getCategoryIcon = (categoryId) => {
+    const category = helpCategories.find(c => c.id === categoryId);
+    return category?.icon || HelpCircle;
+  };
 
-      <div className="help-content">
-        {/* Search and Filter Section */}
-        <div className="search-section">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search help articles..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <span className="search-icon">🔍</span>
-          </div>
+  const getCategoryColor = (categoryId) => {
+    const category = helpCategories.find(c => c.id === categoryId);
+    return category?.color || 'slate';
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container-wide py-6 space-y-6">
+        {/* Header */}
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
           
-          <div className="category-filter">
-            <select 
-              value={selectedCategory} 
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="category-select"
-            >
-              <option value="all">All Categories</option>
-              {helpCategories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
+          <div className="text-center max-w-2xl mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <HelpCircle className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold">Help & Support</h1>
+            <p className="text-muted-foreground mt-2">
+              Find answers to your questions and learn how to use Q-Ease effectively
+            </p>
           </div>
         </div>
 
-        {/* Categories Grid */}
-        <div className="categories-grid">
-          {helpCategories.map(category => (
-            <div 
-              key={category.id}
-              className={`category-card ${selectedCategory === category.id ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              <span className="category-icon">{category.icon}</span>
-              <h3>{category.name}</h3>
+        {/* Search and Filter */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search help articles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {helpCategories.map(category => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
+          </CardContent>
+        </Card>
+
+        {/* Categories Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {helpCategories.map(category => {
+            const Icon = category.icon;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={cn(
+                  "p-4 rounded-xl border-2 transition-all text-left",
+                  selectedCategory === category.id 
+                    ? "border-primary bg-primary/5" 
+                    : "border-border hover:border-muted-foreground/50"
+                )}
+              >
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center mb-2",
+                  category.color === 'blue' && "bg-blue-100 dark:bg-blue-900/30",
+                  category.color === 'green' && "bg-green-100 dark:bg-green-900/30",
+                  category.color === 'purple' && "bg-purple-100 dark:bg-purple-900/30",
+                  category.color === 'amber' && "bg-amber-100 dark:bg-amber-900/30",
+                  category.color === 'slate' && "bg-slate-100 dark:bg-slate-900/30",
+                  category.color === 'red' && "bg-red-100 dark:bg-red-900/30"
+                )}>
+                  <Icon className={cn(
+                    "w-5 h-5",
+                    category.color === 'blue' && "text-blue-600 dark:text-blue-400",
+                    category.color === 'green' && "text-green-600 dark:text-green-400",
+                    category.color === 'purple' && "text-purple-600 dark:text-purple-400",
+                    category.color === 'amber' && "text-amber-600 dark:text-amber-400",
+                    category.color === 'slate' && "text-slate-600 dark:text-slate-400",
+                    category.color === 'red' && "text-red-600 dark:text-red-400"
+                  )} />
+                </div>
+                <p className="font-medium text-sm">{category.name}</p>
+              </button>
+            );
+          })}
         </div>
 
         {/* Articles List */}
-        <div className="articles-section">
-          <h2>
-            {selectedCategory === 'all' ? 'All Help Articles' : 
-             helpCategories.find(c => c.id === selectedCategory)?.name}
-            <span className="article-count">({filteredArticles.length} articles)</span>
-          </h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              {selectedCategory === 'all' ? 'All Help Articles' : 
+               helpCategories.find(c => c.id === selectedCategory)?.name}
+            </h2>
+            <Badge variant="secondary">{filteredArticles.length} articles</Badge>
+          </div>
           
           {filteredArticles.length === 0 ? (
-            <div className="no-results">
-              <div className="no-results-icon">📚</div>
-              <h3>No articles found</h3>
-              <p>Try adjusting your search or filter criteria</p>
-            </div>
+            <Card>
+              <CardContent className="pt-6 text-center py-12">
+                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-semibold text-lg">No articles found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+              </CardContent>
+            </Card>
           ) : (
-            <div className="articles-grid">
-              {filteredArticles.map(article => (
-                <div key={article.id} className="article-card">
-                  <div className="article-header">
-                    <h3>{article.title}</h3>
-                    <span 
-                      className="difficulty-tag"
-                      style={{ backgroundColor: getDifficultyColor(article.difficulty) }}
-                    >
-                      {article.difficulty}
-                    </span>
-                  </div>
-                  <p className="article-content">{article.content}</p>
-                  <div className="article-footer">
-                    <span className="category-badge">
-                      {helpCategories.find(c => c.id === article.category)?.icon} 
-                      {helpCategories.find(c => c.id === article.category)?.name}
-                    </span>
-                    <button className="read-more-button">
-                      Read More →
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="grid md:grid-cols-2 gap-4">
+              {filteredArticles.map(article => {
+                const CategoryIcon = getCategoryIcon(article.category);
+                const diffConfig = getDifficultyConfig(article.difficulty);
+                const categoryColor = getCategoryColor(article.category);
+                
+                return (
+                  <Card key={article.id} className="hover:shadow-md transition-shadow cursor-pointer group">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                          categoryColor === 'blue' && "bg-blue-100 dark:bg-blue-900/30",
+                          categoryColor === 'green' && "bg-green-100 dark:bg-green-900/30",
+                          categoryColor === 'purple' && "bg-purple-100 dark:bg-purple-900/30",
+                          categoryColor === 'amber' && "bg-amber-100 dark:bg-amber-900/30",
+                          categoryColor === 'slate' && "bg-slate-100 dark:bg-slate-900/30",
+                          categoryColor === 'red' && "bg-red-100 dark:bg-red-900/30"
+                        )}>
+                          <CategoryIcon className={cn(
+                            "w-5 h-5",
+                            categoryColor === 'blue' && "text-blue-600 dark:text-blue-400",
+                            categoryColor === 'green' && "text-green-600 dark:text-green-400",
+                            categoryColor === 'purple' && "text-purple-600 dark:text-purple-400",
+                            categoryColor === 'amber' && "text-amber-600 dark:text-amber-400",
+                            categoryColor === 'slate' && "text-slate-600 dark:text-slate-400",
+                            categoryColor === 'red' && "text-red-600 dark:text-red-400"
+                          )} />
+                        </div>
+                        <Badge className={cn("text-xs", diffConfig.color)}>
+                          {diffConfig.label}
+                        </Badge>
+                      </div>
+                      
+                      <h3 className="font-semibold mt-3 group-hover:text-primary transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {article.content}
+                      </p>
+                      
+                      <div className="flex items-center justify-between mt-4">
+                        <span className="text-xs text-muted-foreground">
+                          {helpCategories.find(c => c.id === article.category)?.name}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Contact Support Section */}
-        <div className="support-section">
-          <div className="support-card">
-            <h2>Need More Help?</h2>
-            <p>Our support team is here to assist you with any questions or issues.</p>
-            
-            <div className="support-options">
-              <div className="support-option">
-                <span className="option-icon">📧</span>
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardHeader className="text-center">
+            <CardTitle>Need More Help?</CardTitle>
+            <CardDescription>
+              Our support team is here to assist you with any questions or issues
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-background">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
                 <div>
-                  <h4>Email Support</h4>
-                  <p>support@qease.com</p>
+                  <p className="font-medium text-sm">Email Support</p>
+                  <p className="text-xs text-muted-foreground">support@qease.com</p>
                 </div>
               </div>
               
-              <div className="support-option">
-                <span className="option-icon">💬</span>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-background">
+                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
                 <div>
-                  <h4>Live Chat</h4>
-                  <p>Available 24/7</p>
+                  <p className="font-medium text-sm">Live Chat</p>
+                  <p className="text-xs text-muted-foreground">Available 24/7</p>
                 </div>
               </div>
               
-              <div className="support-option">
-                <span className="option-icon">📞</span>
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-background">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Phone className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
                 <div>
-                  <h4>Phone Support</h4>
-                  <p>+1 (555) 123-4567</p>
+                  <p className="font-medium text-sm">Phone Support</p>
+                  <p className="text-xs text-muted-foreground">+1 (555) 123-4567</p>
                 </div>
               </div>
             </div>
             
-            <button className="contact-support-button">
-              Contact Support Team
-            </button>
-          </div>
-        </div>
+            <div className="text-center">
+              <Button size="lg">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contact Support Team
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

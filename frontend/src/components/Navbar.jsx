@@ -63,7 +63,7 @@ const Navbar = () => {
                                 )}
 
                                 {/* Staff Links */}
-                                {['STAFF', 'ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
+                                {['STAFF', 'ADMIN', 'ORGANISATION_ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
                                     <Link to="/staff" className="nav-link">
                                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -73,7 +73,7 @@ const Navbar = () => {
                                 )}
 
                                 {/* Admin Links */}
-                                {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
+                                {['ADMIN', 'ORGANISATION_ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
                                     <>
                                         <Link to="/admin" className="nav-link">
                                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,12 +104,10 @@ const Navbar = () => {
                         {user ? (
                             <div className="user-menu">
                                 <button className="user-button" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                                    <div className="user-avatar-icon">
-                                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                        </svg>
+                                    <div className="user-avatar-icon user-initials">
+                                        {user.firstName?.charAt(0)?.toUpperCase() || ''}{user.lastName?.charAt(0)?.toUpperCase() || ''}
                                     </div>
-                                    <span className="user-name desktop-only">{user.name}</span>
+                                    <span className="user-name desktop-only">{user.firstName} {user.lastName}</span>
                                     <svg className="chevron" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -183,14 +181,14 @@ const Navbar = () => {
                                 )}
 
                                 {/* Staff Links */}
-                                {['STAFF', 'ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
+                                {['STAFF', 'ADMIN', 'ORGANISATION_ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
                                     <Link to="/staff" className="mobile-link" onClick={() => setIsMenuOpen(false)}>
                                         Staff Dashboard
                                     </Link>
                                 )}
 
                                 {/* Admin Links */}
-                                {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
+                                {['ADMIN', 'ORGANISATION_ADMIN', 'SUPER_ADMIN'].includes(user.role) && (
                                     <Link to="/admin" className="mobile-link" onClick={() => setIsMenuOpen(false)}>
                                         Admin Dashboard
                                     </Link>

@@ -3,7 +3,48 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import api from '../utils/api';
-import './AdminQueueManagementPage.css';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { SearchInput, EmptyState, QueueCardSkeleton } from '@/components/common';
+import { 
+  ArrowLeft,
+  Plus,
+  Search,
+  Filter,
+  Clock,
+  Users,
+  Settings,
+  Trash2,
+  Edit,
+  Eye,
+  PlayCircle,
+  PauseCircle,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  MoreVertical,
+  RefreshCw
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 const AdminQueueManagementPage = () => {
   const { queueId } = useParams();
@@ -18,7 +59,7 @@ const AdminQueueManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // State for form view (existing)
+  // State for form view
   const [queue, setQueue] = useState({
     name: '',
     description: '',
@@ -38,22 +79,18 @@ const AdminQueueManagementPage = () => {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
 
-  // Handle Socket.IO Real-time Updates
+  // Socket.IO Real-time Updates
   useEffect(() => {
-    // Determine Org ID (handle nested object structure)
     const orgId = user?.organisationId || user?.organisation?.id;
 
-    // Only listen if we have an Org ID and we are in List View (or even in Detail View, but mainly for List)
     if (orgId && !queueId) {
       joinOrganization(orgId);
 
       if (socket) {
         const handleOrgUpdate = (data) => {
-          console.log('Received org-update:', data);
           if (data.type === 'queue-created') {
             setQueues(prev => [data.queue, ...prev]);
           } else if (data.type === 'queue-updated') {
-            // Update the specific queue in the list
             setQueues(prev => prev.map(q => q.id === data.queueId ? { ...q, ...data.updates } : q));
           } else if (data.type === 'queue-deleted') {
             setQueues(prev => prev.filter(q => q.id !== data.queueId));
@@ -70,33 +107,22 @@ const AdminQueueManagementPage = () => {
     }
   }, [user, socket, queueId]);
 
-  // Handle initial data loading based on route
+  // Initial data loading
   useEffect(() => {
     if (!queueId) {
-      // List View
       loadQueues();
     } else if (queueId === 'new') {
-      // Create New View - No loading needed, show form immediately
       setLoading(false);
-      // Reset form to default for new queue
       setQueue({
         name: '',
         description: '',
         averageTime: 5,
         maxTokens: 50,
         isActive: true,
-        operatingHours: {
-          start: '09:00',
-          end: '17:00'
-        },
-        prioritySettings: {
-          emergencyEnabled: true,
-          priorityEnabled: true,
-          maxPriorityPerDay: 10
-        }
+        operatingHours: { start: '09:00', end: '17:00' },
+        prioritySettings: { emergencyEnabled: true, priorityEnabled: true, maxPriorityPerDay: 10 }
       });
     } else {
-      // Edit/Detail View
       loadQueueDetails();
     }
   }, [queueId]);
@@ -105,7 +131,6 @@ const AdminQueueManagementPage = () => {
     try {
       setLoading(true);
       setError('');
-
       const response = await api.get('/queues');
       setQueues(response.data.data.queues || []);
     } catch (err) {
@@ -120,7 +145,6 @@ const AdminQueueManagementPage = () => {
     try {
       setLoading(true);
       setError('');
-
       const response = await api.get(`/queues/${queueId}`);
       setQueue(response.data.data.queue);
     } catch (err) {
@@ -131,7 +155,6 @@ const AdminQueueManagementPage = () => {
     }
   };
 
-  // Filter queues based on search and status
   const filteredQueues = queues.filter(q => {
     const matchesSearch = q.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       q.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -141,80 +164,39 @@ const AdminQueueManagementPage = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Handle create new queue
-  const handleCreateNew = () => {
-    navigate('/admin/queues/new');
-  };
-
-  // Handle edit queue
-  const handleEditQueue = (id) => {
-    navigate(`/admin/queues/${id}/edit`);
-  };
-
-  // Handle view queue details
-  const handleViewQueue = (id) => {
-    navigate(`/admin/queues/${id}`);
-  };
-
-  // Handle status toggle
   const toggleQueueStatus = async (id, isActive) => {
     try {
-      setLoading(true);
-      setError('');
-
       const action = isActive ? 'pause' : 'resume';
       await api.put(`/queues/${id}/${action}`);
-
-      // Refresh the list
       await loadQueues();
     } catch (err) {
       setError('Failed to update queue status');
-      console.error('Error updating queue status:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Handle delete queue
   const deleteQueue = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this queue?')) return;
+    if (!window.confirm('Are you sure you want to delete this queue? This action cannot be undone.')) return;
 
     try {
-      setLoading(true);
-      setError('');
-
       await api.delete(`/queues/${id}`);
-
-      // Refresh the list
       await loadQueues();
     } catch (err) {
       setError('Failed to delete queue');
-      console.error('Error deleting queue:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Handle form input changes
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setQueue(prev => ({
         ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
+        [parent]: { ...prev[parent], [child]: value }
       }));
     } else {
-      setQueue(prev => ({
-        ...prev,
-        [field]: value
-      }));
+      setQueue(prev => ({ ...prev, [field]: value }));
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -223,290 +205,367 @@ const AdminQueueManagementPage = () => {
 
     try {
       if (queueId === 'new') {
-        // Create new queue
-        console.log('User object:', user);
-
-        // Handle nested organisation object (fallback)
         const orgId = user?.organisationId || user?.organisation?.id;
-        console.log('Resolved Organisation ID:', orgId);
-
-        const payload = {
-          ...queue,
-          organisationId: orgId
-        };
-
-        console.log('Sending payload:', payload);
+        const payload = { ...queue, organisationId: orgId };
 
         if (!payload.organisationId) {
-          setError(`Error: Organisation ID is missing. Please re-login. (Role: ${user?.role})`);
+          setError('Organisation ID is missing. Please re-login.');
           setSaving(false);
           return;
         }
 
-        const response = await api.post('/queues', payload);
+        await api.post('/queues', payload);
         setSuccess('Queue created successfully!');
         setTimeout(() => navigate('/admin/queues'), 1500);
       } else {
-        // Update existing queue
-        const response = await api.put(`/queues/${queueId}`, queue);
+        await api.put(`/queues/${queueId}`, queue);
         setSuccess('Queue updated successfully!');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save queue');
-      console.error('Error saving queue:', err);
     } finally {
       setSaving(false);
     }
   };
 
-  // Render list view when no queueId
+  // List View
   if (!queueId) {
     return (
-      <div className="admin-queue-management">
-        <div className="page-header">
-          <h1>Queue Management</h1>
-          <p>Manage and configure service queues for your organization</p>
-
-          <div className="header-actions">
-            <button
-              onClick={handleCreateNew}
-              className="create-button"
-            >
-              + Create New Queue
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-
-        {/* Search and Filter */}
-        <div className="search-filter-section">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search queues..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            <span className="search-icon">🔍</span>
+      <div className="min-h-[80vh] bg-background">
+        <div className="container-wide py-6 sm:py-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Queue Management</h1>
+              <p className="text-muted-foreground mt-1">
+                Manage and configure service queues for your organization
+              </p>
+            </div>
+            <Button onClick={() => navigate('/admin/queues/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Queue
+            </Button>
           </div>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
+          {/* Error */}
+          {error && (
+            <div className="mb-6 flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-        {/* Queues List */}
-        <div className="queues-list">
+          {/* Search & Filter */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex-1">
+              <SearchInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                placeholder="Search queues..."
+              />
+            </div>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full sm:w-40">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={loadQueues}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Queues Grid */}
           {loading ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>Loading queues...</p>
-            </div>
-          ) : filteredQueues.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📋</div>
-              <h3>No queues found</h3>
-              <p>{searchTerm ? 'Try adjusting your search criteria' : 'Get started by creating your first queue'}</p>
-              {!searchTerm && (
-                <button onClick={handleCreateNew} className="create-button">
-                  Create Your First Queue
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="queues-grid">
-              {filteredQueues.map(queue => (
-                <div key={queue.id} className="queue-card">
-                  <div className="queue-header">
-                    <h3>{queue.name}</h3>
-                    <span className={`status-badge ${queue.isActive ? 'active' : 'inactive'}`}>
-                      {queue.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-
-                  <p className="queue-description">{queue.description}</p>
-
-                  <div className="queue-stats">
-                    <div className="stat">
-                      <span className="stat-label">Waiting:</span>
-                      <span className="stat-value">{queue.waitingCount}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Avg Wait:</span>
-                      <span className="stat-value">{queue.averageTime || queue.avgWaitTime} min</span>
-                    </div>
-                    {/* Staff count is not yet available from backend
-                    <div className="stat">
-                      <span className="stat-label">Staff:</span>
-                      <span className="stat-value">{queue.staffCount || 0}</span>
-                    </div>
-                    */}
-                  </div>
-
-                  <div className="queue-actions">
-                    <button
-                      onClick={() => handleViewQueue(queue.id)}
-                      className="view-button"
-                    >
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => handleEditQueue(queue.id)}
-                      className="edit-button"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => toggleQueueStatus(queue.id, queue.isActive)}
-                      className={`status-button ${queue.isActive ? 'pause' : 'resume'}`}
-                    >
-                      {queue.isActive ? 'Pause' : 'Resume'}
-                    </button>
-                    <button
-                      onClick={() => deleteQueue(queue.id)}
-                      className="delete-button"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <QueueCardSkeleton key={i} />
               ))}
             </div>
+          ) : filteredQueues.length > 0 ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredQueues.map(queue => (
+                <Card key={queue.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{queue.name}</CardTitle>
+                        <CardDescription className="line-clamp-2">
+                          {queue.description || 'No description'}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={queue.isActive ? 'default' : 'secondary'}>
+                        {queue.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-xl font-bold">{queue.waitingCount || queue._count?.tokens || 0}</div>
+                        <div className="text-xs text-muted-foreground">Waiting</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold">{queue.averageTime || queue.avgWaitTime || '~'}m</div>
+                        <div className="text-xs text-muted-foreground">Avg Wait</div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/admin/queues/${queue.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/admin/queues/${queue.id}/edit`)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon" className="shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => toggleQueueStatus(queue.id, queue.isActive)}>
+                            {queue.isActive ? (
+                              <><PauseCircle className="h-4 w-4 mr-2" /> Pause Queue</>
+                            ) : (
+                              <><PlayCircle className="h-4 w-4 mr-2" /> Resume Queue</>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => deleteQueue(queue.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Queue
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Clock}
+              title="No Queues Found"
+              description={searchTerm ? 'Try adjusting your search criteria' : 'Get started by creating your first queue'}
+              action={
+                !searchTerm && (
+                  <Button onClick={() => navigate('/admin/queues/new')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Queue
+                  </Button>
+                )
+              }
+            />
           )}
         </div>
       </div>
     );
   }
 
-  // Render form view when queueId is provided
+  // Form View (Create/Edit)
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading queue details...</p>
+      <div className="min-h-[80vh] bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Loading queue details...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="queue-management-page">
-      <div className="page-header">
-        <button onClick={() => navigate('/admin/queues')} className="back-button">
-          ← Back to Queue List
-        </button>
-        <h1>{queueId === 'new' ? 'Create New Queue' : 'Edit Queue'}</h1>
+    <div className="min-h-[80vh] bg-background">
+      <div className="container-wide py-6 sm:py-8 max-w-3xl">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/queues')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              {queueId === 'new' ? 'Create New Queue' : 'Edit Queue'}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {queueId === 'new' ? 'Set up a new service queue' : 'Update queue settings'}
+            </p>
+          </div>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <div className="mb-6 flex items-center gap-2 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 flex items-center gap-2 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>General queue details and description</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Queue Name *</Label>
+                <Input
+                  id="name"
+                  value={queue.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="e.g., General Services, Billing Counter"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={queue.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Describe the service this queue provides"
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Queue Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Queue Settings</CardTitle>
+              <CardDescription>Configure queue behavior and limits</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="averageTime">Average Service Time (minutes)</Label>
+                  <Input
+                    id="averageTime"
+                    type="number"
+                    value={queue.averageTime}
+                    onChange={(e) => handleInputChange('averageTime', parseInt(e.target.value))}
+                    min="1"
+                    max="120"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxTokens">Maximum Tokens Per Day</Label>
+                  <Input
+                    id="maxTokens"
+                    type="number"
+                    value={queue.maxTokens}
+                    onChange={(e) => handleInputChange('maxTokens', parseInt(e.target.value))}
+                    min="1"
+                    max="1000"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <Label htmlFor="isActive" className="text-base font-medium">Queue Status</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {queue.isActive ? 'Queue is accepting new tokens' : 'Queue is paused'}
+                  </p>
+                </div>
+                <Switch
+                  id="isActive"
+                  checked={queue.isActive}
+                  onCheckedChange={(checked) => handleInputChange('isActive', checked)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Operating Hours */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Operating Hours</CardTitle>
+              <CardDescription>Set when this queue is open for service</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">Opening Time</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={queue.operatingHours?.start || '09:00'}
+                    onChange={(e) => handleInputChange('operatingHours.start', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">Closing Time</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={queue.operatingHours?.end || '17:00'}
+                    onChange={(e) => handleInputChange('operatingHours.end', e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Form Actions */}
+          <div className="flex gap-4 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/admin/queues')}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                queueId === 'new' ? 'Create Queue' : 'Update Queue'
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
-
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="success-message">
-          {success}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="queue-form">
-        <div className="form-section">
-          <h2>Basic Information</h2>
-
-          <div className="form-group">
-            <label htmlFor="name">Queue Name *</label>
-            <input
-              type="text"
-              id="name"
-              value={queue.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              required
-              placeholder="Enter queue name"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={queue.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Describe the service this queue provides"
-              rows="3"
-            />
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h2>Queue Settings</h2>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="averageTime">Average Service Time (minutes)</label>
-              <input
-                type="number"
-                id="averageTime"
-                value={queue.averageTime}
-                onChange={(e) => handleInputChange('averageTime', parseInt(e.target.value))}
-                min="1"
-                max="120"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="maxTokens">Maximum Tokens Per Day</label>
-              <input
-                type="number"
-                id="maxTokens"
-                value={queue.maxTokens}
-                onChange={(e) => handleInputChange('maxTokens', parseInt(e.target.value))}
-                min="1"
-                max="1000"
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={queue.isActive}
-                onChange={(e) => handleInputChange('isActive', e.target.checked)}
-              />
-              Queue is Active
-            </label>
-          </div>
-        </div>
-
-        <div className="form-actions">
-          <button
-            type="button"
-            onClick={() => navigate('/admin/queues')}
-            className="cancel-button"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="save-button"
-          >
-            {saving ? 'Saving...' : (queueId === 'new' ? 'Create Queue' : 'Update Queue')}
-          </button>
-        </div>
-      </form>
     </div>
   );
 };

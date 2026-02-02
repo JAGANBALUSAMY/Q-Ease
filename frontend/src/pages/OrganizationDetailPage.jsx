@@ -2,215 +2,282 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../contexts/SocketContext';
 import api from '../services/api';
-import QueueCard from '../components/QueueCard';
-import './OrganizationDetailPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { 
+  ArrowLeft, 
+  Clock, 
+  Users, 
+  AlertCircle,
+  MapPin,
+  Phone,
+  Mail,
+  CheckCircle,
+  Building2,
+  Ticket
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const OrganizationDetailPage = () => {
-    const { orgCode } = useParams();
-    const navigate = useNavigate();
-    const { socket, joinOrganization, leaveOrganization } = useSocket();
-    const [organization, setOrganization] = useState(null);
-    const [queues, setQueues] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const { orgCode } = useParams();
+  const navigate = useNavigate();
+  const { socket, joinOrganization, leaveOrganization } = useSocket();
+  const [organization, setOrganization] = useState(null);
+  const [queues, setQueues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchOrganization();
-    }, [orgCode]);
+  useEffect(() => {
+    fetchOrganization();
+  }, [orgCode]);
 
-    useEffect(() => {
-        if (!socket || !organization) return;
+  useEffect(() => {
+    if (!socket || !organization) return;
 
-        // Join organization room for real-time updates
-        joinOrganization(organization.id);
+    joinOrganization(organization.id);
 
-        // Listen for queue updates
-        const handleQueueUpdate = (data) => {
-            console.log('Queue update:', data);
-            setQueues(prevQueues =>
-                prevQueues.map(q => q.id === data.queueId ? { ...q, ...data } : q)
-            );
-        };
-
-        socket.on('queue-update', handleQueueUpdate);
-
-        return () => {
-            socket.off('queue-update', handleQueueUpdate);
-            leaveOrganization(organization.id);
-        };
-    }, [socket, organization]);
-
-    const fetchOrganization = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await api.get(`/organisations/${orgCode}`);
-            setOrganization(response.data.organisation);
-            setQueues(response.data.organisation.queues || []);
-        } catch (err) {
-            console.error('Error fetching organization:', err);
-            setError('Organization not found');
-        } finally {
-            setLoading(false);
-        }
+    const handleQueueUpdate = (data) => {
+      console.log('Queue update:', data);
+      setQueues(prevQueues =>
+        prevQueues.map(q => q.id === data.queueId ? { ...q, ...data } : q)
+      );
     };
 
-    const handleJoinQueue = async (queueId) => {
-        try {
-            const response = await api.post('/tokens', {
-                queueId,
-                priority: 'NORMAL'
-            });
+    socket.on('queue-update', handleQueueUpdate);
 
-            // Navigate to My Tokens page
-            navigate('/my-tokens');
-        } catch (err) {
-            console.error('Error joining queue:', err);
-            alert(err.response?.data?.message || 'Failed to join queue');
-        }
+    return () => {
+      socket.off('queue-update', handleQueueUpdate);
+      leaveOrganization(organization.id);
     };
+  }, [socket, organization]);
 
-    if (loading) {
-        return (
-            <div className="org-detail-page">
-
-                <div className="container">
-                    <div className="loading-state">
-                        <div className="spinner spinner-primary"></div>
-                        <p>Loading organization...</p>
-                    </div>
-                </div>
-            </div>
-        );
+  const fetchOrganization = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await api.get(`/organisations/${orgCode}`);
+      setOrganization(response.data.data.organisation);
+      setQueues(response.data.data.organisation.queues || []);
+    } catch (err) {
+      console.error('Error fetching organization:', err);
+      setError('Organization not found');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (error || !organization) {
-        return (
-            <div className="org-detail-page">
-                <div className="container">
-                    <div className="error-state">
-                        <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3>{error}</h3>
-                        <button className="btn btn-primary" onClick={() => navigate('/')}>
-                            Back to Search
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+  const handleJoinQueue = async (queueId) => {
+    try {
+      const response = await api.post('/tokens', {
+        queueId,
+        priority: 'NORMAL'
+      });
+      navigate('/my-tokens');
+    } catch (err) {
+      console.error('Error joining queue:', err);
+      alert(err.response?.data?.message || 'Failed to join queue');
     }
+  };
 
+  if (loading) {
     return (
-        <div className="org-detail-page">
-
-
-            <div className="container">
-                {/* Organization Header */}
-                <div className="org-header">
-                    <button className="back-button" onClick={() => navigate('/')}>
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back
-                    </button>
-
-                    <div className="org-header-content">
-                        <div className="org-header-left">
-                            <div className="org-avatar-large">
-                                {organization.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="org-header-info">
-                                <div className="org-title-row">
-                                    <h1 className="org-title">{organization.name}</h1>
-                                    {organization.isVerified && (
-                                        <span className="badge badge-success">
-                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            Verified
-                                        </span>
-                                    )}
-                                </div>
-                                {organization.code && (
-                                    <p className="org-code-large">Code: {organization.code}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Organization Details */}
-                    <div className="org-details-grid">
-                        {organization.address && (
-                            <div className="detail-card">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <div>
-                                    <div className="detail-label">Address</div>
-                                    <div className="detail-value">{organization.address}</div>
-                                </div>
-                            </div>
-                        )}
-
-                        {organization.phone && (
-                            <div className="detail-card">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <div>
-                                    <div className="detail-label">Phone</div>
-                                    <div className="detail-value">{organization.phone}</div>
-                                </div>
-                            </div>
-                        )}
-
-                        {organization.email && (
-                            <div className="detail-card">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <div>
-                                    <div className="detail-label">Email</div>
-                                    <div className="detail-value">{organization.email}</div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Queues Section */}
-                <div className="queues-section">
-                    <div className="section-header">
-                        <h2>Available Queues</h2>
-                        <p>{queues.length} queue{queues.length !== 1 ? 's' : ''} available</p>
-                    </div>
-
-                    {queues.length > 0 ? (
-                        <div className="queues-grid">
-                            {queues.map(queue => (
-                                <QueueCard
-                                    key={queue.id}
-                                    queue={queue}
-                                    onJoin={handleJoinQueue}
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="empty-queues">
-                            <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3>No Active Queues</h3>
-                            <p>This organization doesn't have any active queues at the moment.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading organization...</p>
         </div>
+      </div>
     );
+  }
+
+  if (error || !organization) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-semibold">{error || 'Organization not found'}</h2>
+            <p className="text-muted-foreground">The requested organization could not be found.</p>
+            <Button onClick={() => navigate('/')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Search
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container-wide py-6 space-y-6">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/')}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
+
+        {/* Organization Header */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-2xl font-bold text-primary">
+                  {organization.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-2xl font-bold">{organization.name}</h1>
+                      {organization.isVerified && (
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Verified
+                        </Badge>
+                      )}
+                    </div>
+                    {organization.code && (
+                      <p className="text-muted-foreground mt-1">
+                        Code: <span className="font-mono font-medium">{organization.code}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Organization Details */}
+            <div className="grid sm:grid-cols-3 gap-4 mt-6">
+              {organization.address && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Address</p>
+                    <p className="text-sm font-medium">{organization.address}</p>
+                  </div>
+                </div>
+              )}
+
+              {organization.phone && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium">{organization.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {organization.email && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="text-sm font-medium">{organization.email}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Queues Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Available Queues</h2>
+              <p className="text-sm text-muted-foreground">
+                {queues.length} queue{queues.length !== 1 ? 's' : ''} available
+              </p>
+            </div>
+          </div>
+
+          {queues.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {queues.map(queue => (
+                <Card key={queue.id} className="overflow-hidden">
+                  <div className={cn(
+                    "h-1",
+                    queue.isActive ? "bg-green-500" : "bg-gray-300"
+                  )} />
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">{queue.name}</CardTitle>
+                      <Badge variant={queue.isActive ? "default" : "secondary"} className="text-xs">
+                        {queue.isActive ? 'Active' : 'Closed'}
+                      </Badge>
+                    </div>
+                    {queue.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {queue.description}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <Users className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Waiting</p>
+                        <p className="font-semibold">{queue.waitingCount || 0}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <Ticket className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Current</p>
+                        <p className="font-semibold text-primary">{queue.currentServing || '-'}</p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-muted/50">
+                        <Clock className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Est.</p>
+                        <p className="font-semibold">~{queue.averageTime || 5}m</p>
+                      </div>
+                    </div>
+
+                    <Button 
+                      className="w-full"
+                      onClick={() => handleJoinQueue(queue.id)}
+                      disabled={!queue.isActive}
+                    >
+                      <Ticket className="w-4 h-4 mr-2" />
+                      {queue.isActive ? 'Join Queue' : 'Queue Closed'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <Clock className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">No Active Queues</h3>
+                  <p className="text-muted-foreground">
+                    This organization doesn't have any active queues at the moment.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default OrganizationDetailPage;

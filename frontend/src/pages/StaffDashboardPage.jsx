@@ -3,7 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import api from '../services/api';
-import './StaffDashboardPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { StatsCard, EmptyState, QueueCardSkeleton } from '@/components/common';
+import { 
+  Bell,
+  CheckCircle2,
+  Clock,
+  Zap,
+  Users,
+  PlayCircle,
+  PauseCircle,
+  Settings,
+  ArrowRight,
+  RefreshCw,
+  AlertCircle,
+  Ticket
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const StaffDashboardPage = () => {
   const { user } = useAuth();
@@ -16,6 +35,8 @@ const StaffDashboardPage = () => {
     avgWaitTime: 0
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [callingQueue, setCallingQueue] = useState(null);
 
   useEffect(() => {
     fetchStaffQueues();
@@ -38,15 +59,17 @@ const StaffDashboardPage = () => {
     };
   }, [socket]);
 
-  const fetchStaffQueues = async () => {
+  const fetchStaffQueues = async (showRefresh = false) => {
     try {
-      setLoading(true);
+      if (showRefresh) setRefreshing(true);
+      else setLoading(true);
       const response = await api.get('/queues');
       setQueues(response.data.data.queues || []);
     } catch (err) {
       console.error('Error fetching queues:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -61,16 +84,20 @@ const StaffDashboardPage = () => {
 
   const handleCallNext = async (queueId) => {
     try {
-      await api.post(`/queues/${queueId}/call-next`);
+      setCallingQueue(queueId);
+      await api.post(`/tokens/queue/${queueId}/call-next`);
       fetchStaffQueues();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to call next token');
+    } finally {
+      setCallingQueue(null);
     }
   };
 
   const handleToggleQueue = async (queueId, isActive) => {
     try {
-      await api.patch(`/queues/${queueId}`, { isActive: !isActive });
+      const action = isActive ? 'pause' : 'resume';
+      await api.put(`/queues/${queueId}/${action}`);
       setQueues(prevQueues =>
         prevQueues.map(q => q.id === queueId ? { ...q, isActive: !isActive } : q)
       );
@@ -79,124 +106,210 @@ const StaffDashboardPage = () => {
     }
   };
 
+  // Get current time greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
-    <div className="staff-dashboard-page">
-
-
-      <div className="container">
-        <div className="dashboard-header">
+    <div className="min-h-[80vh] bg-background">
+      <div className="container-wide py-6 sm:py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1>Staff Dashboard</h1>
-            <p>Welcome back, {user?.name}!</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Staff Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              {getGreeting()}, {user?.firstName || 'Staff'}! 👋
+            </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => fetchStaffQueues(true)}
+            disabled={refreshing}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+            Refresh
+          </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon stat-success">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.totalServed}</div>
-              <div className="stat-label">Served Today</div>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon stat-warning">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.totalWaiting}</div>
-              <div className="stat-label">Currently Waiting</div>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon stat-info">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div className="stat-content">
-              <div className="stat-value">~{stats.avgWaitTime}m</div>
-              <div className="stat-label">Avg Wait Time</div>
-            </div>
-          </div>
+        <div className="grid sm:grid-cols-3 gap-4 mb-8">
+          <StatsCard
+            title="Served Today"
+            value={stats.totalServed}
+            icon={CheckCircle2}
+            description="Customers served"
+            variant="success"
+          />
+          <StatsCard
+            title="Currently Waiting"
+            value={stats.totalWaiting}
+            icon={Users}
+            description="In all queues"
+            variant="warning"
+          />
+          <StatsCard
+            title="Avg Wait Time"
+            value={`~${stats.avgWaitTime}m`}
+            icon={Zap}
+            description="Per customer"
+            variant="info"
+          />
         </div>
 
-        {/* Queues */}
-        <div className="queues-section">
-          <h2>My Queues</h2>
+        {/* Queues Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">My Queues</h2>
+            <Badge variant="secondary" className="text-sm">
+              {queues.length} queue{queues.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
 
           {loading ? (
-            <div className="loading-state">
-              <div className="spinner spinner-primary"></div>
-              <p>Loading queues...</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <QueueCardSkeleton key={i} />
+              ))}
             </div>
           ) : queues.length > 0 ? (
-            <div className="staff-queues-grid">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {queues.map(queue => (
-                <div key={queue.id} className="staff-queue-card">
-                  <div className="queue-card-header">
-                    <div>
-                      <h3>{queue.name}</h3>
-                      <p className="queue-org">{queue.organisation?.name}</p>
+                <Card key={queue.id} className="overflow-hidden">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{queue.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {queue.organisation?.name}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={queue.isActive}
+                          onCheckedChange={() => handleToggleQueue(queue.id, queue.isActive)}
+                        />
+                        <Badge variant={queue.isActive ? 'default' : 'secondary'}>
+                          {queue.isActive ? 'Active' : 'Paused'}
+                        </Badge>
+                      </div>
                     </div>
-                    <button
-                      className={`toggle-btn ${queue.isActive ? 'active' : 'paused'}`}
-                      onClick={() => handleToggleQueue(queue.id, queue.isActive)}
-                    >
-                      {queue.isActive ? 'Active' : 'Paused'}
-                    </button>
-                  </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Queue Stats */}
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {queue._count?.tokens || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Waiting</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {queue.currentToken || '—'}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Current</div>
+                      </div>
+                    </div>
 
-                  <div className="queue-stats-row">
-                    <div className="queue-stat">
-                      <span className="stat-number">{queue._count?.tokens || 0}</span>
-                      <span className="stat-text">Waiting</span>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 gap-2"
+                        onClick={() => handleCallNext(queue.id)}
+                        disabled={!queue.isActive || queue._count?.tokens === 0 || callingQueue === queue.id}
+                      >
+                        {callingQueue === queue.id ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Bell className="h-4 w-4" />
+                        )}
+                        Call Next
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate(`/staff/queue/${queue.id}`)}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="queue-stat">
-                      <span className="stat-number">{queue.currentToken || '-'}</span>
-                      <span className="stat-text">Current</span>
-                    </div>
-                  </div>
 
-                  <div className="queue-actions">
-                    <button
-                      className="btn btn-primary btn-block"
-                      onClick={() => handleCallNext(queue.id)}
-                      disabled={!queue.isActive || queue._count?.tokens === 0}
-                    >
-                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                      Call Next
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => navigate(`/staff/users`)}
-                    >
-                      Manage
-                    </button>
-                  </div>
-                </div>
+                    {/* Queue Status Warning */}
+                    {!queue.isActive && (
+                      <div className="flex items-center gap-2 p-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-md">
+                        <PauseCircle className="h-4 w-4" />
+                        Queue is paused. Toggle to resume calling.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3>No Queues Assigned</h3>
-              <p>Contact your administrator to get assigned to queues</p>
-            </div>
+            <EmptyState
+              icon={Clock}
+              title="No Queues Assigned"
+              description="Contact your administrator to get assigned to queues"
+            />
           )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mt-8 pt-8 border-t">
+          <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Card 
+              className="cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => navigate('/staff/walk-in')}
+            >
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Ticket className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Register Walk-in</p>
+                  <p className="text-sm text-muted-foreground">Add customer to queue</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => navigate('/profile')}
+            >
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Settings className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Settings</p>
+                  <p className="text-sm text-muted-foreground">Manage preferences</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => fetchStaffQueues(true)}
+            >
+              <CardContent className="flex items-center gap-4 p-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <RefreshCw className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">Refresh Data</p>
+                  <p className="text-sm text-muted-foreground">Sync latest updates</p>
+                </div>
+                <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground" />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

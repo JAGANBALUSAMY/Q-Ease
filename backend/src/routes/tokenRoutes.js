@@ -15,6 +15,7 @@ const {
   callNextToken,
   markTokenServed,
   cancelToken,
+  skipToken,
   getQueueTokens
 } = require('../controllers/tokenController');
 
@@ -29,6 +30,9 @@ router.get('/:tokenId', authenticateToken, validateId, getTokenById);
 
 // Cancel token
 router.patch('/:tokenId/cancel', authenticateToken, validateId, cancelToken);
+
+// Skip token (Staff only) - marks as missed
+router.patch('/:tokenId/skip', authenticateToken, authorizeRoles(['STAFF', 'ORGANISATION_ADMIN', 'SUPER_ADMIN']), validateId, skipToken);
 
 // Call next token in queue (Staff only)
 router.post('/queue/:queueId/call-next', authenticateToken, authorizeRoles(['STAFF', 'ORGANISATION_ADMIN', 'SUPER_ADMIN']), callNextToken);
