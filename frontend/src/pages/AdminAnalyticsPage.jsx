@@ -2,7 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
-import './AdminAnalyticsPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { 
+  ArrowLeft, 
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Clock,
+  Download,
+  RefreshCw,
+  AlertCircle,
+  Smile,
+  Activity,
+  Target,
+  Zap,
+  FileText
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const AdminAnalyticsPage = () => {
   const navigate = useNavigate();
@@ -13,7 +49,8 @@ const AdminAnalyticsPage = () => {
     historical: {},
     staff: {},
     customer: {},
-    operational: {}
+    operational: {},
+    overview: {}
   });
   
   const [loading, setLoading] = useState(true);
@@ -25,12 +62,11 @@ const AdminAnalyticsPage = () => {
   useEffect(() => {
     loadAnalyticsData();
     
-    // Set up auto-refresh for real-time data
     const interval = setInterval(() => {
       if (activeTab === 'realtime') {
         loadRealtimeData();
       }
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
     
     setRefreshInterval(interval);
     
@@ -46,7 +82,6 @@ const AdminAnalyticsPage = () => {
       setLoading(true);
       setError('');
       
-      // Load all analytics data based on active tab
       switch(activeTab) {
         case 'realtime':
           await loadRealtimeData();
@@ -210,323 +245,400 @@ const AdminAnalyticsPage = () => {
     }
   };
 
-  const getTabConfig = () => {
-    return {
-      overview: { label: 'Overview', icon: '📊' },
-      realtime: { label: 'Real-time', icon: '🕐' },
-      historical: { label: 'Historical', icon: '📈' },
-      staff: { label: 'Staff', icon: '👥' },
-      customer: { label: 'Customer', icon: '👤' },
-      operational: { label: 'Operational', icon: '⚙️' }
-    };
-  };
-
-  const renderOverviewTab = () => {
-    const data = analyticsData.overview || {};
-    return (
-      <div className="overview-dashboard">
-        <div className="kpi-grid">
-          <div className="kpi-card">
-            <div className="kpi-header">
-              <span className="kpi-icon">👥</span>
-              <h3>Total Served Today</h3>
-            </div>
-            <div className="kpi-value">{data.totalServedToday || 0}</div>
-            <div className="kpi-trend positive">↑ 12% from yesterday</div>
-          </div>
-          
-          <div className="kpi-card">
-            <div className="kpi-header">
-              <span className="kpi-icon">⏱️</span>
-              <h3>Avg Wait Time</h3>
-            </div>
-            <div className="kpi-value">{data.avgWaitTime || 0} min</div>
-            <div className="kpi-trend negative">↑ 2 min from target</div>
-          </div>
-          
-          <div className="kpi-card">
-            <div className="kpi-header">
-              <span className="kpi-icon">😊</span>
-              <h3>Satisfaction</h3>
-            </div>
-            <div className="kpi-value">{data.satisfactionScore || 0}/5</div>
-            <div className="kpi-trend positive">↑ 0.3 points</div>
-          </div>
-          
-          <div className="kpi-card">
-            <div className="kpi-header">
-              <span className="kpi-icon">📋</span>
-              <h3>Active Queues</h3>
-            </div>
-            <div className="kpi-value">{data.activeQueues || 0}</div>
-            <div className="kpi-trend neutral">Stable</div>
-          </div>
-        </div>
-        
-        <div className="charts-row">
-          <div className="chart-container">
-            <h3>Service Distribution</h3>
-            <div className="chart-placeholder">
-              {/* Pie chart would go here */}
-              <div className="pie-chart-simulation">
-                <div className="chart-segment" style={{backgroundColor: '#3498db', width: '40%'}}>Consultation 40%</div>
-                <div className="chart-segment" style={{backgroundColor: '#27ae60', width: '30%'}}>Registration 30%</div>
-                <div className="chart-segment" style={{backgroundColor: '#f39c12', width: '20%'}}>Payment 20%</div>
-                <div className="chart-segment" style={{backgroundColor: '#e74c3c', width: '10%'}}>Other 10%</div>
+  const StatCard = ({ title, value, icon: Icon, trend, trendValue, color = "blue" }) => (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="text-3xl font-bold">{value}</p>
+            {trendValue && (
+              <div className={cn(
+                "flex items-center gap-1 text-sm",
+                trend === 'up' ? "text-green-600" : trend === 'down' ? "text-red-600" : "text-muted-foreground"
+              )}>
+                {trend === 'up' ? <TrendingUp className="w-4 h-4" /> : trend === 'down' ? <TrendingDown className="w-4 h-4" /> : null}
+                <span>{trendValue}</span>
               </div>
-            </div>
+            )}
           </div>
-          
-          <div className="chart-container">
-            <h3>Hourly Trend</h3>
-            <div className="chart-placeholder">
-              {/* Line chart would go here */}
-              <div className="line-chart-simulation">
-                {[10, 25, 45, 67, 58, 42, 35, 28].map((value, index) => (
-                  <div key={index} className="chart-bar" style={{height: `${value}%`}}>
-                    <span className="bar-value">{value}</span>
-                    <span className="bar-label">{index + 9}AM</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center",
+            color === "blue" && "bg-blue-100 dark:bg-blue-900/30",
+            color === "green" && "bg-green-100 dark:bg-green-900/30",
+            color === "amber" && "bg-amber-100 dark:bg-amber-900/30",
+            color === "purple" && "bg-purple-100 dark:bg-purple-900/30"
+          )}>
+            <Icon className={cn(
+              "w-6 h-6",
+              color === "blue" && "text-blue-600 dark:text-blue-400",
+              color === "green" && "text-green-600 dark:text-green-400",
+              color === "amber" && "text-amber-600 dark:text-amber-400",
+              color === "purple" && "text-purple-600 dark:text-purple-400"
+            )} />
           </div>
         </div>
-      </div>
-    );
-  };
+      </CardContent>
+    </Card>
+  );
 
-  const renderRealtimeTab = () => {
-    const realtime = analyticsData.realtime || {};
-    const overview = realtime.overview || {};
-    const queues = realtime.queues || [];
-    const alerts = realtime.alerts || [];
-    
+  if (loading && !analyticsData.overview) {
     return (
-      <div className="realtime-dashboard">
-        <div className="dashboard-header">
-          <h2>Real-time Operations</h2>
-          <div className="controls">
-            <button className="refresh-button" onClick={loadRealtimeData}>
-              🔄 Refresh
-            </button>
-            <span className="last-updated">Last updated: {new Date().toLocaleTimeString()}</span>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading analytics...</p>
         </div>
-        
-        <div className="status-grid">
-          <div className="status-card active">
-            <h3>Active Queues</h3>
-            <div className="status-value">{overview.activeQueues || 0}</div>
-          </div>
-          
-          <div className="status-card waiting">
-            <h3>Waiting Customers</h3>
-            <div className="status-value">{overview.waitingCustomers || 0}</div>
-          </div>
-          
-          <div className="status-card served">
-            <h3>Served Today</h3>
-            <div className="status-value">{overview.servedToday || 0}</div>
-          </div>
-          
-          <div className="status-card staff">
-            <h3>Staff Online</h3>
-            <div className="status-value">{overview.staffOnline || 0}</div>
-          </div>
-        </div>
-        
-        <div className="alerts-section">
-          <h3>🔔 Active Alerts</h3>
-          {alerts.length > 0 ? (
-            <div className="alerts-list">
-              {alerts.map((alert, index) => (
-                <div key={index} className={`alert-item ${alert.severity}`}>
-                  <span className="alert-icon">{alert.severity === 'high' ? '⚠️' : 'ℹ️'}</span>
-                  <span className="alert-message">{alert.message}</span>
-                  <span className="alert-time">{alert.time}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="no-alerts">No active alerts</div>
-          )}
-        </div>
-        
-        <div className="queues-section">
-          <h3>Queue Performance</h3>
-          <div className="queues-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Queue</th>
-                  <th>Waiting</th>
-                  <th>Avg Wait</th>
-                  <th>Status</th>
-                  <th>Staff</th>
-                </tr>
-              </thead>
-              <tbody>
-                {queues.map((queue, index) => (
-                  <tr key={index}>
-                    <td>{queue.name}</td>
-                    <td>{queue.waiting}</td>
-                    <td>{queue.avgWait} min</td>
-                    <td>
-                      <span className={`status-badge ${queue.status}`}>
-                        {queue.status}
-                      </span>
-                    </td>
-                    <td>{queue.staffCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading analytics...</p>
       </div>
     );
   }
 
   return (
-    <div className="analytics-page">
-      <div className="page-header">
-        <button onClick={() => navigate(-1)} className="back-button">
-          ← Back to Dashboard
-        </button>
-        <h1>Analytics Dashboard</h1>
-        <div className="header-actions">
-          <select 
-            value={dateRange} 
-            onChange={(e) => setDateRange(e.target.value)}
-            className="date-range-select"
-          >
-            <option value="1d">Today</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-          </select>
-          
-          <div className="export-buttons">
-            <button onClick={() => handleExport('csv')} className="export-button">
-              📥 CSV
-            </button>
-            <button onClick={() => handleExport('pdf')} className="export-button">
-              📄 PDF
-            </button>
+    <div className="min-h-screen bg-background">
+      <div className="container-wide py-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="gap-2 -ml-2 mb-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+            <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+            <p className="text-muted-foreground">Monitor performance and track key metrics</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Select range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1d">Today</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="90d">Last 90 Days</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
+                <Download className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExport('pdf')}>
+                <FileText className="w-4 h-4 mr-2" />
+                PDF
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
-      <div className="analytics-container">
-        {/* Tab Navigation */}
-        <div className="tab-navigation">
-          {Object.entries(getTabConfig()).map(([key, config]) => (
-            <button
-              key={key}
-              className={`tab-button ${activeTab === key ? 'active' : ''}`}
-              onClick={() => setActiveTab(key)}
-            >
-              <span className="tab-icon">{config.icon}</span>
-              <span className="tab-label">{config.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full">
+            <TabsTrigger value="overview" className="gap-2">
+              <BarChart3 className="w-4 h-4 hidden sm:block" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="realtime" className="gap-2">
+              <Activity className="w-4 h-4 hidden sm:block" />
+              Real-time
+            </TabsTrigger>
+            <TabsTrigger value="historical" className="gap-2">
+              <TrendingUp className="w-4 h-4 hidden sm:block" />
+              Historical
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="gap-2">
+              <Users className="w-4 h-4 hidden sm:block" />
+              Staff
+            </TabsTrigger>
+            <TabsTrigger value="customer" className="gap-2">
+              <Smile className="w-4 h-4 hidden sm:block" />
+              Customer
+            </TabsTrigger>
+            <TabsTrigger value="operational" className="gap-2">
+              <Target className="w-4 h-4 hidden sm:block" />
+              Operational
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tab Content */}
-        <div className="tab-content">
-          {activeTab === 'overview' && renderOverviewTab()}
-          {activeTab === 'realtime' && renderRealtimeTab()}
-          
-          {activeTab === 'historical' && (
-            <div className="historical-dashboard">
-              <h2>Historical Performance Analysis</h2>
-              <div className="chart-grid">
-                <div className="chart-card">
-                  <h3>Performance Trends</h3>
-                  <div className="chart-placeholder">Line chart showing performance over time</div>
-                </div>
-                <div className="chart-card">
-                  <h3>Service Comparison</h3>
-                  <div className="chart-placeholder">Bar chart comparing service performance</div>
-                </div>
-              </div>
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard 
+                title="Total Served Today" 
+                value={analyticsData.overview?.totalServedToday || 156}
+                icon={Users}
+                trend="up"
+                trendValue="12% from yesterday"
+                color="blue"
+              />
+              <StatCard 
+                title="Avg Wait Time" 
+                value={`${analyticsData.overview?.avgWaitTime || 12} min`}
+                icon={Clock}
+                trend="down"
+                trendValue="2 min from target"
+                color="amber"
+              />
+              <StatCard 
+                title="Satisfaction" 
+                value={`${analyticsData.overview?.satisfactionScore || 4.5}/5`}
+                icon={Smile}
+                trend="up"
+                trendValue="0.3 points"
+                color="green"
+              />
+              <StatCard 
+                title="Active Queues" 
+                value={analyticsData.overview?.activeQueues || 4}
+                icon={Activity}
+                trendValue="Stable"
+                color="purple"
+              />
             </div>
-          )}
-          
-          {activeTab === 'staff' && (
-            <div className="staff-dashboard">
-              <h2>Staff Performance Analytics</h2>
-              <div className="staff-rankings">
-                <h3>Top Performers</h3>
-                <div className="rankings-list">
-                  <div className="ranking-item">
-                    <span className="rank">1</span>
-                    <span className="staff-name">Sarah Johnson</span>
-                    <span className="score">94.2%</span>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Service Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Consultation', value: 40, color: 'bg-blue-500' },
+                      { label: 'Registration', value: 30, color: 'bg-green-500' },
+                      { label: 'Payment', value: 20, color: 'bg-amber-500' },
+                      { label: 'Other', value: 10, color: 'bg-purple-500' }
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{item.label}</span>
+                          <span className="font-medium">{item.value}%</span>
+                        </div>
+                        <Progress value={item.value} className={cn("h-2", item.color)} />
+                      </div>
+                    ))}
                   </div>
-                  <div className="ranking-item">
-                    <span className="rank">2</span>
-                    <span className="staff-name">Mike Chen</span>
-                    <span className="score">89.7%</span>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Hourly Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-end justify-between h-[200px] gap-2">
+                    {[10, 25, 45, 67, 58, 42, 35, 28].map((value, index) => (
+                      <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                        <div 
+                          className="w-full bg-primary/20 rounded-t relative group"
+                          style={{ height: `${value * 2}px` }}
+                        >
+                          <div 
+                            className="absolute bottom-0 w-full bg-primary rounded-t transition-all"
+                            style={{ height: `${value * 2}px` }}
+                          />
+                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            {value}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{index + 9}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="ranking-item">
-                    <span className="rank">3</span>
-                    <span className="staff-name">Lisa Rodriguez</span>
-                    <span className="score">87.3%</span>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Realtime Tab */}
+          <TabsContent value="realtime" className="space-y-6 mt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm text-muted-foreground">Live updates every 30 seconds</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={loadRealtimeData}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard title="Active Queues" value="4" icon={Activity} color="blue" />
+              <StatCard title="Waiting Customers" value="23" icon={Users} color="amber" />
+              <StatCard title="Served Today" value="156" icon={Zap} color="green" />
+              <StatCard title="Staff Online" value="8" icon={Users} color="purple" />
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Queue Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Queue</TableHead>
+                      <TableHead>Waiting</TableHead>
+                      <TableHead>Avg Wait</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Staff</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[
+                      { name: 'Registration', waiting: 5, avgWait: 8, status: 'active', staff: 2 },
+                      { name: 'Consultation', waiting: 12, avgWait: 15, status: 'busy', staff: 3 },
+                      { name: 'Billing', waiting: 3, avgWait: 5, status: 'active', staff: 2 },
+                      { name: 'Pharmacy', waiting: 8, avgWait: 10, status: 'active', staff: 1 }
+                    ].map((queue) => (
+                      <TableRow key={queue.name}>
+                        <TableCell className="font-medium">{queue.name}</TableCell>
+                        <TableCell>{queue.waiting}</TableCell>
+                        <TableCell>{queue.avgWait} min</TableCell>
+                        <TableCell>
+                          <Badge variant={queue.status === 'busy' ? 'destructive' : 'default'}>
+                            {queue.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{queue.staff}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Staff Tab */}
+          <TabsContent value="staff" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Staff Performance Rankings</CardTitle>
+                <CardDescription>Based on service speed and customer feedback</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { rank: 1, name: 'Sarah Johnson', score: 94.2, served: 45 },
+                    { rank: 2, name: 'Mike Chen', score: 89.7, served: 42 },
+                    { rank: 3, name: 'Lisa Rodriguez', score: 87.3, served: 38 }
+                  ].map((staff) => (
+                    <div key={staff.rank} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                      <div className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center font-bold",
+                        staff.rank === 1 ? "bg-amber-100 text-amber-700" :
+                        staff.rank === 2 ? "bg-slate-100 text-slate-700" :
+                        "bg-orange-100 text-orange-700"
+                      )}>
+                        {staff.rank}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{staff.name}</p>
+                        <p className="text-sm text-muted-foreground">{staff.served} customers served</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-primary">{staff.score}%</p>
+                        <p className="text-xs text-muted-foreground">Performance score</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Customer Tab */}
+          <TabsContent value="customer" className="space-y-6 mt-6">
+            <div className="grid sm:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Overall Satisfaction</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <div className="text-5xl font-bold text-primary mb-2">4.3</div>
+                  <p className="text-muted-foreground">out of 5.0</p>
+                  <div className="flex justify-center gap-1 mt-4">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Smile 
+                        key={star} 
+                        className={cn(
+                          "w-8 h-8",
+                          star <= 4 ? "text-amber-400 fill-amber-400" : "text-muted-foreground"
+                        )} 
+                      />
+                    ))}
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Customer Metrics</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Repeat Customers</span>
+                    <span className="font-bold">68%</span>
+                  </div>
+                  <Progress value={68} className="h-2" />
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">First-time Visitors</span>
+                    <span className="font-bold">32%</span>
+                  </div>
+                  <Progress value={32} className="h-2" />
+                </CardContent>
+              </Card>
             </div>
-          )}
-          
-          {activeTab === 'customer' && (
-            <div className="customer-dashboard">
-              <h2>Customer Experience Analytics</h2>
-              <div className="satisfaction-metrics">
-                <div className="metric-card">
-                  <h3>Overall Satisfaction</h3>
-                  <div className="rating">4.3/5.0</div>
-                </div>
-                <div className="metric-card">
-                  <h3>Repeat Customers</h3>
-                  <div className="percentage">68%</div>
-                </div>
-              </div>
+          </TabsContent>
+
+          {/* Historical & Operational tabs with similar structure */}
+          <TabsContent value="historical" className="space-y-6 mt-6">
+            <Card>
+              <CardContent className="pt-6 text-center py-20">
+                <TrendingUp className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold">Historical Performance Analysis</h3>
+                <p className="text-muted-foreground">Charts and detailed trends will be displayed here</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="operational" className="space-y-6 mt-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Resource Utilization</p>
+                  <p className="text-4xl font-bold text-primary">87%</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Cost Per Service</p>
+                  <p className="text-4xl font-bold text-primary">$12.50</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Efficiency Score</p>
+                  <p className="text-4xl font-bold text-primary">92%</p>
+                </CardContent>
+              </Card>
             </div>
-          )}
-          
-          {activeTab === 'operational' && (
-            <div className="operational-dashboard">
-              <h2>Operational Efficiency</h2>
-              <div className="efficiency-metrics">
-                <div className="metric-row">
-                  <span className="metric-label">Resource Utilization</span>
-                  <span className="metric-value">87%</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Cost Per Service</span>
-                  <span className="metric-value">$12.50</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

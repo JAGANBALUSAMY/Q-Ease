@@ -2,7 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
-import './AdminSettingsPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { 
+  ArrowLeft, 
+  Building2,
+  Clock,
+  Bell,
+  Shield,
+  Download,
+  Database,
+  Save,
+  AlertCircle,
+  CheckCircle,
+  Mail,
+  Phone,
+  MapPin
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const AdminSettingsPage = () => {
   const navigate = useNavigate();
@@ -131,315 +153,415 @@ const AdminSettingsPage = () => {
     }
   };
 
-  const dayNames = {
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    sunday: 'Sunday'
-  };
+  const dayNames = [
+    { key: 'monday', label: 'Mon' },
+    { key: 'tuesday', label: 'Tue' },
+    { key: 'wednesday', label: 'Wed' },
+    { key: 'thursday', label: 'Thu' },
+    { key: 'friday', label: 'Fri' },
+    { key: 'saturday', label: 'Sat' },
+    { key: 'sunday', label: 'Sun' }
+  ];
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading settings...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading settings...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="settings-page">
-      <div className="page-header">
-        <button onClick={() => navigate(-1)} className="back-button">
-          ← Back to Dashboard
-        </button>
-        <h1>Organisation Settings</h1>
-      </div>
-
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="success-message">
-          {success}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="settings-form">
-        {/* Organisation Profile Section */}
-        <div className="form-section">
-          <h3>Organisation Profile</h3>
+    <div className="min-h-screen bg-background">
+      <div className="container-wide py-6 space-y-6">
+        {/* Header */}
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate(-1)}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
           
-          <div className="form-group">
-            <label htmlFor="name">Organisation Name *</label>
-            <input
-              type="text"
-              id="name"
-              value={organisation.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter organisation name"
-              required
-              disabled={saving}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="code">Organisation Code</label>
-            <input
-              type="text"
-              id="code"
-              value={organisation.code}
-              onChange={(e) => handleInputChange('code', e.target.value)}
-              placeholder="Enter organisation code"
-              disabled={true} // Code is typically auto-generated
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              value={organisation.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Enter organisation description"
-              rows="3"
-              disabled={saving}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Address</label>
-            <textarea
-              id="address"
-              value={organisation.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Enter organisation address"
-              rows="2"
-              disabled={saving}
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="phone">Phone</label>
-              <input
-                type="tel"
-                id="phone"
-                value={organisation.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="Enter phone number"
-                disabled={saving}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                value={organisation.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder="Enter email address"
-                disabled={saving}
-              />
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold">Organisation Settings</h1>
+            <p className="text-muted-foreground mt-1">Manage your organisation profile and preferences</p>
           </div>
         </div>
 
-        {/* Operating Hours Section */}
-        <div className="form-section">
-          <h3>Operating Hours</h3>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="operatingHours.start">Opening Time</label>
-              <input
-                type="time"
-                id="operatingHours.start"
-                value={organisation.operatingHours.start}
-                onChange={(e) => handleInputChange('operatingHours.start', e.target.value)}
-                disabled={saving}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="operatingHours.end">Closing Time</label>
-              <input
-                type="time"
-                id="operatingHours.end"
-                value={organisation.operatingHours.end}
-                onChange={(e) => handleInputChange('operatingHours.end', e.target.value)}
-                disabled={saving}
-              />
-            </div>
+        {/* Messages */}
+        {error && (
+          <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
           </div>
+        )}
 
-          <div className="form-group">
-            <label>Operating Days</label>
-            <div className="checkbox-grid">
-              {Object.entries(dayNames).map(([key, value]) => (
-                <label key={key} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={organisation.operatingHours.days.includes(key)}
-                    onChange={() => handleInputChange(`operatingHours.days.${key}`, null)}
+        {success && (
+          <div className="bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Organisation Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                Organisation Profile
+              </CardTitle>
+              <CardDescription>Basic information about your organisation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Organisation Name *</Label>
+                  <Input
+                    id="name"
+                    value={organisation.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter organisation name"
+                    required
                     disabled={saving}
                   />
-                  {value}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
+                </div>
 
-        {/* Notification Settings */}
-        <div className="form-section">
-          <h3>Notification Settings</h3>
-          
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={organisation.notificationSettings.emailNotifications}
-                onChange={(e) => handleInputChange('notificationSettings.emailNotifications', e.target.checked)}
-                disabled={saving}
-              />
-              Enable Email Notifications
-            </label>
-            
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={organisation.notificationSettings.smsNotifications}
-                onChange={(e) => handleInputChange('notificationSettings.smsNotifications', e.target.checked)}
-                disabled={saving}
-              />
-              Enable SMS Notifications
-            </label>
-            
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={organisation.notificationSettings.pushNotifications}
-                onChange={(e) => handleInputChange('notificationSettings.pushNotifications', e.target.checked)}
-                disabled={saving}
-              />
-              Enable Push Notifications
-            </label>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="code">Organisation Code</Label>
+                  <Input
+                    id="code"
+                    value={organisation.code}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">Auto-generated, cannot be changed</p>
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="notificationSettings.tokenReminderMinutes">Token Reminder (minutes before)</label>
-            <input
-              type="number"
-              id="notificationSettings.tokenReminderMinutes"
-              value={organisation.notificationSettings.tokenReminderMinutes}
-              onChange={(e) => handleInputChange('notificationSettings.tokenReminderMinutes', parseInt(e.target.value))}
-              min="1"
-              max="60"
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={organisation.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Enter organisation description"
+                  rows={3}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Textarea
+                    id="address"
+                    value={organisation.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="Enter organisation address"
+                    className="pl-10"
+                    rows={2}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={organisation.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="Enter phone number"
+                      className="pl-10"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={organisation.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="Enter email address"
+                      className="pl-10"
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Operating Hours */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Operating Hours
+              </CardTitle>
+              <CardDescription>Set when your organisation is open for service</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="operatingHours.start">Opening Time</Label>
+                  <Input
+                    id="operatingHours.start"
+                    type="time"
+                    value={organisation.operatingHours?.start || '09:00'}
+                    onChange={(e) => handleInputChange('operatingHours.start', e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="operatingHours.end">Closing Time</Label>
+                  <Input
+                    id="operatingHours.end"
+                    type="time"
+                    value={organisation.operatingHours?.end || '17:00'}
+                    onChange={(e) => handleInputChange('operatingHours.end', e.target.value)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Operating Days</Label>
+                <div className="flex flex-wrap gap-2">
+                  {dayNames.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleInputChange(`operatingHours.days.${key}`, null)}
+                      disabled={saving}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                        organisation.operatingHours?.days?.includes(key)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notification Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Notification Settings
+              </CardTitle>
+              <CardDescription>Configure how notifications are sent to customers</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Send token updates via email</p>
+                  </div>
+                  <Switch
+                    checked={organisation.notificationSettings?.emailNotifications}
+                    onCheckedChange={(checked) => handleInputChange('notificationSettings.emailNotifications', checked)}
+                    disabled={saving}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>SMS Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Send token updates via SMS</p>
+                  </div>
+                  <Switch
+                    checked={organisation.notificationSettings?.smsNotifications}
+                    onCheckedChange={(checked) => handleInputChange('notificationSettings.smsNotifications', checked)}
+                    disabled={saving}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Push Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Send push notifications to mobile devices</p>
+                  </div>
+                  <Switch
+                    checked={organisation.notificationSettings?.pushNotifications}
+                    onCheckedChange={(checked) => handleInputChange('notificationSettings.pushNotifications', checked)}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label htmlFor="tokenReminderMinutes">Token Reminder (minutes before)</Label>
+                <Input
+                  id="tokenReminderMinutes"
+                  type="number"
+                  value={organisation.notificationSettings?.tokenReminderMinutes || 15}
+                  onChange={(e) => handleInputChange('notificationSettings.tokenReminderMinutes', parseInt(e.target.value))}
+                  min="1"
+                  max="60"
+                  className="max-w-[200px]"
+                  disabled={saving}
+                />
+                <p className="text-xs text-muted-foreground">Send reminder notification this many minutes before estimated service time</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Security Settings
+              </CardTitle>
+              <CardDescription>Configure security options for your organisation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Two-Factor Authentication</Label>
+                  <p className="text-sm text-muted-foreground">Require 2FA for all staff members</p>
+                </div>
+                <Switch
+                  checked={organisation.securitySettings?.requireTwoFactor}
+                  onCheckedChange={(checked) => handleInputChange('securitySettings.requireTwoFactor', checked)}
+                  disabled={saving}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                  <Input
+                    id="sessionTimeout"
+                    type="number"
+                    value={organisation.securitySettings?.sessionTimeout || 60}
+                    onChange={(e) => handleInputChange('securitySettings.sessionTimeout', parseInt(e.target.value))}
+                    min="1"
+                    max="480"
+                    disabled={saving}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                  <Input
+                    id="passwordMinLength"
+                    type="number"
+                    value={organisation.securitySettings?.passwordMinLength || 8}
+                    onChange={(e) => handleInputChange('securitySettings.passwordMinLength', parseInt(e.target.value))}
+                    min="6"
+                    max="20"
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Special Characters in Passwords</Label>
+                  <p className="text-sm text-muted-foreground">Passwords must contain special characters</p>
+                </div>
+                <Switch
+                  checked={organisation.securitySettings?.passwordRequireSpecialChar}
+                  onCheckedChange={(checked) => handleInputChange('securitySettings.passwordRequireSpecialChar', checked)}
+                  disabled={saving}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Backup & Export */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="w-5 h-5" />
+                Backup & Export
+              </CardTitle>
+              <CardDescription>Manage your organisation data</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={handleBackup}
+                  disabled={saving}
+                  className="flex-1"
+                >
+                  <Database className="w-4 h-4 mr-2" />
+                  Create Backup
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={handleExportData}
+                  disabled={saving}
+                  className="flex-1"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Data
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
               disabled={saving}
-            />
-          </div>
-        </div>
-
-        {/* Security Settings */}
-        <div className="form-section">
-          <h3>Security Settings</h3>
-          
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={organisation.securitySettings.requireTwoFactor}
-                onChange={(e) => handleInputChange('securitySettings.requireTwoFactor', e.target.checked)}
-                disabled={saving}
-              />
-              Require Two-Factor Authentication
-            </label>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="securitySettings.sessionTimeout">Session Timeout (minutes)</label>
-              <input
-                type="number"
-                id="securitySettings.sessionTimeout"
-                value={organisation.securitySettings.sessionTimeout}
-                onChange={(e) => handleInputChange('securitySettings.sessionTimeout', parseInt(e.target.value))}
-                min="1"
-                max="480"
-                disabled={saving}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="securitySettings.passwordMinLength">Minimum Password Length</label>
-              <input
-                type="number"
-                id="securitySettings.passwordMinLength"
-                value={organisation.securitySettings.passwordMinLength}
-                onChange={(e) => handleInputChange('securitySettings.passwordMinLength', parseInt(e.target.value))}
-                min="6"
-                max="20"
-                disabled={saving}
-              />
-            </div>
-          </div>
-
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={organisation.securitySettings.passwordRequireSpecialChar}
-                onChange={(e) => handleInputChange('securitySettings.passwordRequireSpecialChar', e.target.checked)}
-                disabled={saving}
-              />
-              Require Special Characters in Passwords
-            </label>
-          </div>
-        </div>
-
-        {/* Backup & Export */}
-        <div className="form-section">
-          <h3>Backup & Export</h3>
-          
-          <div className="backup-actions">
-            <button 
-              type="button" 
-              onClick={handleBackup}
-              className="backup-button"
-              disabled={saving}
+              size="lg"
             >
-              Create Backup
-            </button>
-            
-            <button 
-              type="button" 
-              onClick={handleExportData}
-              className="export-button"
-              disabled={saving}
-            >
-              Export Data
-            </button>
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </>
+              )}
+            </Button>
           </div>
-        </div>
-
-        <div className="form-actions">
-          <button 
-            type="submit" 
-            className="save-button"
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save Settings'}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

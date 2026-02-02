@@ -104,7 +104,8 @@ const checkOrganisationAccess = async (req, res, next) => {
 // Check if user has access to queue
 const checkQueueAccess = async (req, res, next) => {
   try {
-    const { queueId } = req.params;
+    // Support both :id and :queueId parameter names
+    const queueId = req.params.queueId || req.params.id;
 
     const queue = await prisma.queue.findUnique({
       where: { id: queueId },

@@ -1,202 +1,303 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
-import './OrganizationSearchPage.css';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { SearchInput, EmptyState, QueueCardSkeleton } from '@/components/common';
+import { 
+  Search,
+  MapPin,
+  Clock,
+  Building2,
+  CheckCircle2,
+  ArrowRight,
+  Users,
+  Grid3X3,
+  List,
+  Filter,
+  RefreshCw,
+  AlertCircle
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const OrganizationSearchPage = () => {
-    const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const [organizations, setOrganizations] = useState([]);
-    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [organizations, setOrganizations] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        fetchOrganizations();
-    }, []);
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
 
-    const fetchOrganizations = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await api.get('/organisations');
-            setOrganizations(response.data.data.organisations || []);
-        } catch (err) {
-            console.error('Error fetching organizations:', err);
-            setError('Failed to load organizations');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchOrganizations = async (showRefresh = false) => {
+    try {
+      if (showRefresh) setRefreshing(true);
+      else setLoading(true);
+      setError(null);
+      const response = await api.get('/organisations');
+      setOrganizations(response.data.data.organisations || []);
+    } catch (err) {
+      console.error('Error fetching organizations:', err);
+      setError('Failed to load organizations');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
-        if (!searchQuery.trim()) {
-            fetchOrganizations();
-            return;
-        }
+  const handleSearch = async (e) => {
+    e?.preventDefault();
+    if (!searchQuery.trim()) {
+      fetchOrganizations();
+      return;
+    }
 
-        try {
-            setLoading(true);
-            const response = await api.get(`/organisations/search?q=${encodeURIComponent(searchQuery)}`);
-            setOrganizations(response.data.data.organisations || []);
-        } catch (err) {
-            console.error('Search error:', err);
-            setError('Search failed');
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      setLoading(true);
+      const response = await api.get(`/organisations/search?q=${encodeURIComponent(searchQuery)}`);
+      setOrganizations(response.data.data.organisations || []);
+    } catch (err) {
+      console.error('Search error:', err);
+      setError('Search failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const filteredOrgs = searchQuery
-        ? organizations.filter(org =>
-            org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            org.address?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        : organizations;
+  const filteredOrgs = searchQuery
+    ? organizations.filter(org =>
+        org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        org.address?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : organizations;
 
-    return (
-        <div className="org-search-page">
-            <div className="container">
-                {/* Search Header */}
-                <div className="search-header">
-                    <h1>Find Organizations</h1>
-                    <p>Browse and search for organizations with active queues</p>
-                </div>
-
-                {/* Search Bar */}
-                <form className="search-section" onSubmit={handleSearch}>
-                    <div className="search-bar-large">
-                        <svg className="search-icon-large" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                            type="text"
-                            className="search-input-large"
-                            placeholder="Search by name, location, or type..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                className="clear-search"
-                                onClick={() => {
-                                    setSearchQuery('');
-                                    fetchOrganizations();
-                                }}
-                            >
-                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        )}
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-lg">
-                        Search
-                    </button>
-                </form>
-
-                {/* Results */}
-                {loading ? (
-                    <div className="loading-state">
-                        <div className="spinner spinner-primary"></div>
-                        <p>Loading organizations...</p>
-                    </div>
-                ) : error ? (
-                    <div className="error-state">
-                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3>{error}</h3>
-                        <button className="btn btn-primary" onClick={fetchOrganizations}>
-                            Try Again
-                        </button>
-                    </div>
-                ) : filteredOrgs.length > 0 ? (
-                    <>
-                        <div className="results-header">
-                            <h2>{filteredOrgs.length} Organizations Found</h2>
-                        </div>
-                        <div className="org-grid">
-                            {filteredOrgs.map(org => (
-                                <div
-                                    key={org.id}
-                                    className="org-card"
-                                    onClick={() => navigate(`/org/${org.code || org.id}`)}
-                                >
-                                    <div className="org-card-header">
-                                        <div className="org-icon">
-                                            {org.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="org-info">
-                                            <h3 className="org-name">{org.name}</h3>
-                                            {org.code && (
-                                                <span className="org-code">Code: {org.code}</span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {org.address && (
-                                        <div className="org-detail">
-                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            <span>{org.address}</span>
-                                        </div>
-                                    )}
-
-                                    <div className="org-stats">
-                                        <div className="stat">
-                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <span>{org._count?.queues || 0} Queues</span>
-                                        </div>
-                                        {org.isVerified && (
-                                            <span className="badge badge-success">
-                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                Verified
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <button className="btn btn-primary btn-block">
-                                        View Queues
-                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </>
-                ) : (
-                    <div className="empty-state">
-                        <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                        <h3>No Organizations Found</h3>
-                        <p>Try adjusting your search or browse all organizations</p>
-                        {searchQuery && (
-                            <button
-                                className="btn btn-primary"
-                                onClick={() => {
-                                    setSearchQuery('');
-                                    fetchOrganizations();
-                                }}
-                            >
-                                Clear Search
-                            </button>
-                        )}
-                    </div>
-                )}
+  // Organization Card Component
+  const OrgCard = ({ org, isListView }) => (
+    <Card 
+      className={cn(
+        "group cursor-pointer transition-all duration-200 hover:shadow-md hover:border-primary/50",
+        isListView && "flex-row"
+      )}
+      onClick={() => navigate(`/org/${org.code || org.id}`)}
+    >
+      <CardContent className={cn(
+        "p-5",
+        isListView && "flex items-center gap-6 w-full"
+      )}>
+        {/* Header */}
+        <div className={cn(
+          "flex items-start gap-4",
+          isListView ? "flex-1" : "mb-4"
+        )}>
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <span className="text-xl font-bold text-primary">
+              {org.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                {org.name}
+              </h3>
+              {org.isVerified && (
+                <Badge variant="secondary" className="shrink-0 gap-1 text-green-600 bg-green-50 dark:bg-green-900/20">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verified
+                </Badge>
+              )}
             </div>
+            {org.code && (
+              <p className="text-sm text-muted-foreground">Code: {org.code}</p>
+            )}
+          </div>
         </div>
-    );
+
+        {/* Details */}
+        <div className={cn(
+          "space-y-2",
+          isListView ? "flex-1" : "mb-4"
+        )}>
+          {org.address && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate">{org.address}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>{org._count?.queues || 0} Queues</span>
+            </div>
+            {org._count?.activeTokens > 0 && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>{org._count.activeTokens} in queue</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action */}
+        <Button 
+          className={cn(
+            "gap-2",
+            isListView ? "shrink-0" : "w-full"
+          )}
+          variant={isListView ? "outline" : "default"}
+        >
+          View Queues
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="min-h-[80vh] bg-background">
+      <div className="container-wide py-6 sm:py-8">
+        {/* Page Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Find Organizations
+          </h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Browse and search for organizations with active queues
+          </p>
+        </div>
+
+        {/* Search Section */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <form onSubmit={handleSearch} className="flex gap-3">
+            <div className="flex-1">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search by name, location, or code..."
+                onClear={() => {
+                  setSearchQuery('');
+                  fetchOrganizations();
+                }}
+              />
+            </div>
+            <Button type="submit" className="shrink-0">
+              <Search className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
+          </form>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            {!loading && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{filteredOrgs.length}</span> organizations found
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fetchOrganizations(true)}
+              disabled={refreshing}
+            >
+              <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+            </Button>
+            <div className="flex items-center border rounded-lg p-1 bg-muted/30">
+              <Button
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-3"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 px-3"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results */}
+        {loading ? (
+          <div className={cn(
+            "gap-4",
+            viewMode === 'grid' 
+              ? "grid sm:grid-cols-2 lg:grid-cols-3" 
+              : "flex flex-col"
+          )}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <QueueCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-4 bg-destructive/10 rounded-full mb-4">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">{error}</h3>
+            <p className="text-muted-foreground mb-4">
+              Something went wrong while loading organizations
+            </p>
+            <Button onClick={() => fetchOrganizations()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        ) : filteredOrgs.length > 0 ? (
+          <div className={cn(
+            "gap-4",
+            viewMode === 'grid' 
+              ? "grid sm:grid-cols-2 lg:grid-cols-3" 
+              : "flex flex-col"
+          )}>
+            {filteredOrgs.map(org => (
+              <OrgCard 
+                key={org.id} 
+                org={org} 
+                isListView={viewMode === 'list'} 
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Building2}
+            title="No Organizations Found"
+            description={
+              searchQuery 
+                ? "Try adjusting your search or browse all organizations"
+                : "There are no organizations available at the moment"
+            }
+            action={
+              searchQuery && (
+                <Button
+                  onClick={() => {
+                    setSearchQuery('');
+                    fetchOrganizations();
+                  }}
+                >
+                  Clear Search
+                </Button>
+              )
+            }
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default OrganizationSearchPage;

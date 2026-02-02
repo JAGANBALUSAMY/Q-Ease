@@ -525,6 +525,66 @@ const cancelToken = async (req, res) => {
   }
 };
 
+// Skip token (Staff only) - marks token as missed
+const skipToken = async (req, res) => {
+  try {
+    const { tokenId } = req.params;
+
+    const token = await prisma.token.findUnique({
+      where: { id: tokenId }
+    });
+
+    if (!token) {
+      return res.status(404).json({
+        success: false,
+        message: 'Token not found'
+      });
+    }
+
+    if (!['PENDING', 'CALLED'].includes(token.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token cannot be skipped in current status'
+      });
+    }
+
+    const updatedToken = await prisma.token.update({
+      where: { id: tokenId },
+      data: {
+        status: 'MISSED'
+      }
+    });
+
+    // Emit Socket.IO event
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`token-${tokenId}`).emit('token-update', {
+        type: 'token-skipped',
+        tokenId: updatedToken.id,
+        status: 'MISSED'
+      });
+
+      io.to(`queue-${token.queueId}`).emit('queue-update', {
+        type: 'token-skipped',
+        queueId: token.queueId,
+        tokenId: updatedToken.tokenId
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Token skipped successfully',
+      data: { token: updatedToken }
+    });
+  } catch (error) {
+    console.error('Skip token error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to skip token'
+    });
+  }
+};
+
 // Get queue tokens (Staff/Admin)
 const getQueueTokens = async (req, res) => {
   try {
@@ -573,5 +633,6 @@ module.exports = {
   callNextToken,
   markTokenServed,
   cancelToken,
+  skipToken,
   getQueueTokens
 };

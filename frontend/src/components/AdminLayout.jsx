@@ -1,87 +1,33 @@
 import React, { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import './AdminLayout.css';
+import { Outlet } from 'react-router-dom';
+import Navbar from '@/components/layout/Navbar';
+import Sidebar from '@/components/layout/Sidebar';
+import { cn } from '@/lib/utils';
 
 const AdminLayout = () => {
-  const { user, logout } = useAuth();
-  const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
-
-  const sidebarItems = [
-    { path: '/admin', label: 'Dashboard', icon: '📊' },
-    { path: '/admin/queues', label: 'Queue Management', icon: '📋' },
-    { path: '/admin/users', label: 'Staff Management', icon: '👥' },
-    { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
-    { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
-    { path: '/admin/help', label: 'Help & Support', icon: '❓' }
-  ];
-
-  const handleLogout = () => {
-    logout();
-  };
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className={`admin-layout ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-      {/* Top Header */}
-      <header className="admin-header">
-        <div className="header-left">
-          <button 
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? '◀' : '▶'}
-          </button>
-          <div className="logo">
-            <Link to="/admin">Q-Ease Admin</Link>
-          </div>
-        </div>
-        
-        <div className="header-right">
-          <div className="user-info">
-            <span className="user-name">{user?.firstName} {user?.lastName}</span>
-            <span className="user-role">{user?.role}</span>
-          </div>
-          <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      {/* Top Navbar */}
+      <Navbar />
 
-      {/* Sidebar Navigation */}
-      <nav className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-content">
-          <div className="sidebar-items">
-            {sidebarItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`}
-              >
-                <span className="item-icon">{item.icon}</span>
-                {sidebarOpen && <span className="item-label">{item.label}</span>}
-              </Link>
-            ))}
-          </div>
-          
-          {sidebarOpen && (
-            <div className="sidebar-footer">
-              <div className="org-info">
-                <h4>Organisation</h4>
-                <p>{user?.organisation?.name || 'Not assigned'}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+      {/* Sidebar */}
+      <Sidebar 
+        collapsed={sidebarCollapsed} 
+        setCollapsed={setSidebarCollapsed} 
+      />
 
       {/* Main Content */}
-      <main className="admin-main-content">
-        <Outlet />
+      <main
+        className={cn(
+          "min-h-[calc(100vh-4rem)] pt-4 pb-8 transition-all duration-300",
+          sidebarCollapsed ? "ml-16" : "ml-64"
+        )}
+      >
+        <div className="container-wide">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

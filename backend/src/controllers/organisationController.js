@@ -200,12 +200,16 @@ const getOrganisationById = async (req, res) => {
             id: true,
             name: true,
             description: true,
-            status: true,
-            waitingCount: true,
+            maxTokens: true,
             averageTime: true,
-            currentServing: true,
+            isActive: true,
             createdAt: true,
-            updatedAt: true
+            updatedAt: true,
+            _count: {
+              select: {
+                tokens: true
+              }
+            }
           }
         }
       }

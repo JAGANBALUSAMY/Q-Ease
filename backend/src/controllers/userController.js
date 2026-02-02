@@ -21,7 +21,7 @@ const getUserProfile = async (req, res) => {
                 firstName: true,
                 lastName: true,
                 phoneNumber: true,
-                role: true,
+                roleId: true,
                 organisationId: true,
                 isVerified: true,
                 isActive: true,
