@@ -1,0 +1,598 @@
+{
+  "info": {
+    "name": "Q-Ease API Collection",
+    "description": "Complete API collection for Q-Ease digital queue management system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"organisationCode\": \"{{org_code}}\",\n  \"roleId\": \"USER\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (responseCode.code === 200) {",
+                  "    var jsonData = JSON.parse(responseBody);",
+                  "    pm.environment.set(\"auth_token\", jsonData.data.token);",
+                  "    pm.environment.set(\"refresh_token\", jsonData.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Organisations",
+      "item": [
+        {
+          "name": "Create Organisation (Super Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"City Hospital\",\n  \"description\": \"A leading healthcare facility\",\n  \"address\": \"123 Medical Street\",\n  \"city\": \"Metropolis\",\n  \"state\": \"State\",\n  \"country\": \"Country\",\n  \"contactEmail\": \"contact@cityhospital.com\",\n  \"contactPhone\": \"+1-555-123-4567\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organisations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Organisation (Super Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/organisations/{{org_id}}/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations", "{{org_id}}", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organisation by Code",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/organisations/code/{{org_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations", "code", "{{org_code}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Organisations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/organisations/search?q={{search_term}}&location={{location}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "{{search_term}}"
+                },
+                {
+                  "key": "location",
+                  "value": "{{location}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Queues",
+      "item": [
+        {
+          "name": "Create Queue (Org Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emergency Registration\",\n  \"description\": \"Patient registration for emergency department\",\n  \"maxTokens\": 50,\n  \"averageTime\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{org_id}}/queues",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{org_id}}", "queues"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Queue (Org Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Queue Name\",\n  \"description\": \"Updated description\",\n  \"maxTokens\": 75,\n  \"averageTime\": 8,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{org_id}}/queues/{{queue_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{org_id}}", "queues", "{{queue_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pause Queue (Staff/Org Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/pause",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "pause"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resume Queue (Staff/Org Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/resume",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "resume"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tokens",
+      "item": [
+        {
+          "name": "Generate Token (User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"NORMAL\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/tokens",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "tokens"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Walk-in Token (Staff)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"John Doe\",\n  \"contactInfo\": \"+1-555-987-6543\",\n  \"priority\": \"NORMAL\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/tokens/walk-in",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "tokens", "walk-in"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Call Next Token (Staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/queues/{{queue_id}}/call-next",
+              "host": ["{{base_url}}"],
+              "path": ["api", "queues", "{{queue_id}}", "call-next"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Token Status (Staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SERVED\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tokens/{{token_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tokens", "{{token_id}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User's Tokens",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/tokens",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "me", "tokens"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Token Priority (Staff/Org Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"priority\": \"PRIORITY\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tokens/{{token_id}}/priority",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tokens", "{{token_id}}", "priority"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Skip Token (Staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tokens/{{token_id}}/skip",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tokens", "{{token_id}}", "skip"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Get Queue Analytics (Org Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/organisations/{{org_id}}/analytics/queues/{{queue_id}}?startDate=2023-01-01&endDate=2023-01-31&metricType=AVERAGE_WAIT_TIME",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations", "{{org_id}}", "analytics", "queues", "{{queue_id}}"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2023-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-01-31"
+                },
+                {
+                  "key": "metricType",
+                  "value": "AVERAGE_WAIT_TIME"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Organisation Analytics (Org Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/organisations/{{org_id}}/analytics?startDate=2023-01-01&endDate=2023-01-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organisations", "{{org_id}}", "analytics"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2023-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2023-01-31"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Platform Analytics (Super Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/analytics/platform",
+              "host": ["{{base_url}}"],
+              "path": ["api", "analytics", "platform"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "user_email",
+      "value": "test@example.com"
+    },
+    {
+      "key": "user_password",
+      "value": "password123"
+    },
+    {
+      "key": "org_code",
+      "value": "ORG001"
+    },
+    {
+      "key": "org_id",
+      "value": ""
+    },
+    {
+      "key": "queue_id",
+      "value": ""
+    },
+    {
+      "key": "token_id",
+      "value": ""
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "search_term",
+      "value": "hospital"
+    },
+    {
+      "key": "location",
+      "value": "metropolis"
+    }
+  ]
+}

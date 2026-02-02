@@ -1,0 +1,6 @@
+# OpenAPI specification for Q-Ease API
+openapi: 3.0.0
+info:
+  title: Q-Ease API
+  version: 1.0.0
+paths: {}

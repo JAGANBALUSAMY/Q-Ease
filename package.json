@@ -1,0 +1,21 @@
+{
+  "name": "q-ease",
+  "version": "1.0.0",
+  "description": "Multi-domain digital queue management system",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node scripts/setupDatabase.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "cd frontend && npm run build",
+    "setup-db": "cd backend && npm run setup-db"
+  },
+  "dependencies": {
+    "concurrently": "^7.6.0",
+    "dotenv": "^16.6.1",
+    "pg": "^8.17.2"
+  },
+  "author": "Q-Ease Team",
+  "license": "MIT"
+}

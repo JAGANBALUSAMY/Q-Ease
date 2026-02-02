@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Ease System Admin Tool</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --error: #ef4444;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--gray-100);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--gray-900);
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--gray-700);
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.15s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.15s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .alert.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            display: block;
+        }
+
+        .alert.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--gray-200);
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .divider span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0 1rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Tenant</h1>
+        <p class="subtitle">System Owner Tool</p>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="createForm">
+            <div class="form-group">
+                <label for="systemKey">System Secret Key</label>
+                <input type="password" id="systemKey" required placeholder="Enter system secret key">
+            </div>
+
+            <div class="divider">
+                <span>Organization Details</span>
+            </div>
+
+            <div class="form-group">
+                <label for="orgName">Organization Name</label>
+                <input type="text" id="orgName" required placeholder="e.g. Acme Corp">
+            </div>
+
+            <div class="form-group">
+                <label for="orgCode">Organization Code (6 CHARS)</label>
+                <input type="text" id="orgCode" required maxlength="6" pattern="[A-Za-z0-9]{6}" placeholder="e.g. ACME01" style="text-transform: uppercase;">
+            </div>
+
+            <div class="divider">
+                <span>Super Admin Details</span>
+            </div>
+
+            <div class="form-group">
+                <label for="firstName">First Name</label>
+                <input type="text" id="firstName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="text" id="password" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="tel" id="phoneNumber">
+            </div>
+
+            <button type="submit" id="submitBtn">Create Tenant</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('createForm');
+        const alertBox = document.getElementById('alert');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Reset alert
+            alertBox.className = 'alert';
+            alertBox.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+
+            const formData = {
+                orgName: document.getElementById('orgName').value,
+                orgCode: document.getElementById('orgCode').value.toUpperCase(),
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+            };
+
+            const systemKey = document.getElementById('systemKey').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/system/create-tenant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-system-key': systemKey
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('success', `Success! Tenant created.<br>Org Code: <strong>${data.data.organisation.code}</strong><br>Admin: <strong>${data.data.user.email}</strong>`);
+                    form.reset();
+                    // Restore system key for convenience
+                    document.getElementById('systemKey').value = systemKey;
+                } else {
+                    showAlert('error', data.message || 'Failed to create tenant');
+                }
+            } catch (error) {
+                showAlert('error', 'Network error. Is the backend running?');
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Tenant';
+            }
+        });
+
+        function showAlert(type, message) {
+            alertBox.className = `alert ${type}`;
+            alertBox.innerHTML = message;
+            alertBox.style.display = 'block';
+        }
+
+        // Force uppercase on org code input
+        document.getElementById('orgCode').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>

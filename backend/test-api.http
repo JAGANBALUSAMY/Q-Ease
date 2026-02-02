@@ -1,0 +1,170 @@
+### Q-Ease API Test File
+### Use with REST Client extension in VS Code or similar tools
+
+@baseUrl = http://localhost:5000/api
+@token = 
+
+### Health Check
+GET http://localhost:5000/health
+
+### Test Root Endpoint
+GET http://localhost:5000/
+
+### ============================================
+### AUTHENTICATION TESTS
+### ============================================
+
+### Register New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Test123!",
+  "firstName": "Test",
+  "lastName": "User",
+  "phoneNumber": "+91-98765-00000"
+}
+
+### Login with Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@cityhospital.com",
+  "password": "Password123!"
+}
+
+### Login with Regular User
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "patient1@gmail.com",
+  "password": "Password123!"
+}
+
+### ============================================
+### ORGANISATION TESTS
+### ============================================
+
+### Get All Organisations
+GET {{baseUrl}}/organisations
+
+### Search Organisations
+GET {{baseUrl}}/organisations?search=hospital
+
+### Get Organisation by Code
+GET {{baseUrl}}/organisations/code/HOSP01
+
+### Get Organisation by ID (replace with actual ID)
+GET {{baseUrl}}/organisations/clxxx
+
+### ============================================
+### QUEUE TESTS
+### ============================================
+
+### Get All Queues
+GET {{baseUrl}}/queues
+
+### Get Queues by Organisation
+GET {{baseUrl}}/queues?organisationId=hospital-id
+
+### Get Queue by ID
+GET {{baseUrl}}/queues/hospital-opd
+
+### ============================================
+### TOKEN TESTS (Requires Authentication)
+### ============================================
+
+### Create Token (Join Queue)
+POST {{baseUrl}}/tokens
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "queueId": "hospital-opd",
+  "priority": "NORMAL"
+}
+
+### Get My Tokens
+GET {{baseUrl}}/tokens/my
+Authorization: Bearer {{token}}
+
+### Get Token by ID
+GET {{baseUrl}}/tokens/token-id
+Authorization: Bearer {{token}}
+
+### Cancel Token
+PATCH {{baseUrl}}/tokens/token-id/cancel
+Authorization: Bearer {{token}}
+
+### ============================================
+### ANALYTICS TESTS
+### ============================================
+
+### Get Organisation Analytics
+GET {{baseUrl}}/analytics/organisation/org-id
+
+### Get Queue Analytics
+GET {{baseUrl}}/analytics/queue/queue-id
+
+### ============================================
+### ADMIN TESTS (Requires Admin Token)
+### ============================================
+
+### Create New Queue
+POST {{baseUrl}}/queues
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Emergency Services",
+  "organisationId": "org-id",
+  "description": "24/7 emergency medical services",
+  "maxTokens": 50,
+  "averageTime": 10
+}
+
+### Update Queue
+PATCH {{baseUrl}}/queues/queue-id
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "isActive": false
+}
+
+### Call Next Token (Staff)
+POST {{baseUrl}}/tokens/queue-id/call-next
+Authorization: Bearer {{token}}
+
+### ============================================
+### ERROR TESTS
+### ============================================
+
+### Invalid Email Format
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "invalid-email",
+  "password": "Test123!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+
+### Missing Required Fields
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+### Invalid Organisation Code
+GET {{baseUrl}}/organisations/code/INVALID
+
+### Non-existent Route
+GET {{baseUrl}}/nonexistent

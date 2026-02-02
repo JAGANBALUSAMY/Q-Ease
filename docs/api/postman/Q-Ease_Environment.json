@@ -1,0 +1,62 @@
+{
+  "id": "q-ease-environment",
+  "name": "Q-Ease Development Environment",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "enabled": true
+    },
+    {
+      "key": "user_email",
+      "value": "test@example.com",
+      "enabled": true
+    },
+    {
+      "key": "user_password",
+      "value": "password123",
+      "enabled": true
+    },
+    {
+      "key": "org_code",
+      "value": "ORG001",
+      "enabled": true
+    },
+    {
+      "key": "org_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "queue_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "enabled": true
+    },
+    {
+      "key": "search_term",
+      "value": "hospital",
+      "enabled": true
+    },
+    {
+      "key": "location",
+      "value": "metropolis",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}
