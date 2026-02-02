@@ -1,3 +1,16 @@
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.error-text {
+  margin-top: 4px;
+  margin-left: 28px; /* aligns with input text, not icon */
+  color: #dc2626;
+  font-size: 0.85rem;
+}
+
 .auth-page {
   min-height: 100vh;
   display: flex;
