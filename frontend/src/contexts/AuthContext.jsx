@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed';
-      return { success: false, message };
+      return { success: false, error: message };
     }
   };
 

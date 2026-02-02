@@ -236,15 +236,17 @@ const LoginPage = () => {
               </button>
             </form>
 
-            <div className="auth-footer">
-              <p>
-                Don't have an account?{' '}
-                <Link to="/register" className="auth-link">
-                  Sign up
-                </Link>
-              </p>
-            </div>
-                <div className="divider">
+            {role === 'customer' && (
+              <div className="auth-footer">
+                <p>
+                  Don't have an account?{' '}
+                  <Link to="/register" className="auth-link">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            )}
+            <div className="divider">
               <span>or continue with</span>
             </div>
 

@@ -92,7 +92,7 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Email address not found. Please register or check your email.'
       });
     }
 
@@ -101,7 +101,7 @@ const loginUser = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid password. Please try again.'
       });
     }
 
@@ -159,7 +159,7 @@ const staffLogin = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid employee credentials'
+        message: 'Employee ID not found. Please check your ID.'
       });
     }
 
@@ -168,7 +168,7 @@ const staffLogin = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid password. Please try again.'
       });
     }
 
@@ -224,7 +224,7 @@ const adminLogin = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid admin credentials'
+        message: 'Admin email not found. Please check your email.'
       });
     }
 
@@ -233,7 +233,7 @@ const adminLogin = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid password. Please try again.'
       });
     }
 
@@ -289,7 +289,7 @@ const superAdminLogin = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid super admin credentials'
+        message: 'Super Admin email not found. Please check your email.'
       });
     }
 
@@ -298,7 +298,7 @@ const superAdminLogin = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid password. Please try again.'
       });
     }
 
