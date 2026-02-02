@@ -83,7 +83,7 @@ const OrganizationDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-muted-foreground">Loading organization...</p>
@@ -94,7 +94,7 @@ const OrganizationDetailPage = () => {
 
   if (error || !organization) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
@@ -111,8 +111,8 @@ const OrganizationDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-wide py-6 space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="container-wide py-6 space-y-6 px-4">
         {/* Back Button */}
         <Button 
           variant="ghost" 

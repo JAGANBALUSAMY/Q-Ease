@@ -284,7 +284,7 @@ const AdminAnalyticsPage = () => {
 
   if (loading && !analyticsData.overview) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-muted-foreground">Loading analytics...</p>
@@ -294,8 +294,8 @@ const AdminAnalyticsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container-wide py-6 space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="container-wide py-6 space-y-6 px-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">

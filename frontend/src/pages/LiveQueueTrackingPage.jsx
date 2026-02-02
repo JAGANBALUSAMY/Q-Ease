@@ -222,7 +222,7 @@ const LiveQueueTrackingPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-muted-foreground">Loading token details...</p>
@@ -233,7 +233,7 @@ const LiveQueueTrackingPage = () => {
 
   if (error && !token) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
@@ -248,7 +248,7 @@ const LiveQueueTrackingPage = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <Ticket className="w-12 h-12 text-muted-foreground mx-auto" />
@@ -269,8 +269,8 @@ const LiveQueueTrackingPage = () => {
   const progressPercent = Math.max(0, 100 - ((token.position - 1) * 10));
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-lg py-6 space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="container max-w-lg py-6 space-y-6 px-4">
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">

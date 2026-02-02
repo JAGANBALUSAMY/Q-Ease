@@ -99,8 +99,8 @@ const QRScanPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-lg py-6 space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center py-6">
+      <div className="container max-w-lg space-y-6 px-4">
         {/* Header */}
         <div className="space-y-4">
           <Button 
@@ -144,7 +144,7 @@ const QRScanPage = () => {
           <Card>
             <CardContent className="pt-6 space-y-4">
               {/* QR Reader Container */}
-              <div className="relative rounded-lg overflow-hidden bg-black">
+              <div className="relative rounded-lg overflow-hidden bg-black flex items-center justify-center">
                 <div id="qr-reader" className="w-full"></div>
               </div>
 
@@ -192,8 +192,8 @@ const QRScanPage = () => {
 
         {/* Manual Entry */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+          <CardHeader className="text-center">
+            <CardTitle className="text-base flex items-center justify-center gap-2">
               <Keyboard className="w-4 h-4" />
               Manual Entry
             </CardTitle>
@@ -221,15 +221,35 @@ const QRScanPage = () => {
       <style>{`
         #qr-reader {
           border: none !important;
+          width: 100% !important;
+          max-width: 100% !important;
         }
         #qr-reader video {
           border-radius: 0.5rem;
+          width: 100% !important;
+          max-width: 100% !important;
         }
         #qr-reader__scan_region {
           background: transparent !important;
+          display: flex !important;
+          justify-content: center !important;
+        }
+        #qr-reader__scan_region img {
+          display: none !important;
         }
         #qr-reader__dashboard {
           padding: 1rem !important;
+          text-align: center !important;
+        }
+        #qr-reader__dashboard_section {
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 0.5rem !important;
+        }
+        #qr-reader__dashboard_section_csr {
+          display: flex !important;
+          justify-content: center !important;
         }
         #qr-reader__dashboard_section_csr button {
           background: hsl(var(--primary)) !important;
@@ -242,6 +262,12 @@ const QRScanPage = () => {
         #qr-reader__dashboard_section_swaplink {
           color: hsl(var(--primary)) !important;
           text-decoration: none !important;
+        }
+        #qr-reader__status_span {
+          display: none !important;
+        }
+        #qr-reader__header_message {
+          display: none !important;
         }
       `}</style>
     </div>
